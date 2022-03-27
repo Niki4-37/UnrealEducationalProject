@@ -18,13 +18,14 @@ AEPBaseCharacter::AEPBaseCharacter()
 
     Camera = CreateDefaultSubobject<UCameraComponent>("Camera");
     Camera->SetupAttachment(SpringArm);
+
+    WeaponComponent = CreateDefaultSubobject<UEPWeaponComponent>("WeaponComponent");
 }
 
 void AEPBaseCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	
-    SpawnWeapon();
 }
 
 
@@ -60,20 +61,6 @@ float AEPBaseCharacter::GetMovementDirection() const
     const auto Degreese = FMath::RadiansToDegrees(AngleBetween);
 
     return CrossPoduct.IsZero() ? Degreese : Degreese * FMath::Sign(CrossPoduct.Z);
-}
-
-void AEPBaseCharacter::SpawnWeapon()
-{
-    if (!GetWorld()) return;
-
-    const auto Weapon = GetWorld()->SpawnActor<AEPBaseWeapon>(PlayerWeapon);
-    if (Weapon)
-    {
-        FAttachmentTransformRules AttachmentRules(EAttachmentRule::SnapToTarget, false);
-        Weapon->AttachToComponent(GetMesh(),AttachmentRules, "WeaponSocket");
-    }
-    
-
 }
 
 
