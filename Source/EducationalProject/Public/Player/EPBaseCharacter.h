@@ -12,10 +12,13 @@
 
 #include "Components/TimelineComponent.h"
 
+#include "Weapon/EPBaseWeapon.h"
+
 #include "EPBaseCharacter.generated.h"
 
 class USpringArmComponent;
 class UCameraComponent;
+class AEPBaseWeapon;
 
 UCLASS()
 class EDUCATIONALPROJECT_API AEPBaseCharacter : public ACharacter
@@ -31,6 +34,9 @@ protected:
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Camera")
     UCameraComponent* Camera;
+
+    UPROPERTY(EditDefaultsOnly, Category = "Weapon")
+    TSubclassOf<AEPBaseWeapon> PlayerWeapon;
     
 	virtual void BeginPlay() override;
 
@@ -39,5 +45,11 @@ public:
     
     void MoveForward(float Amount);
     void MoveRight(float Amount);
+
+    UFUNCTION(BlueprintCallable)
+    float GetMovementDirection() const;
+
+private:
+    void SpawnWeapon();
 
 };

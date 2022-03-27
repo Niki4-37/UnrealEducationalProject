@@ -12,7 +12,7 @@ AEPBaseCharacter::AEPBaseCharacter()
     
     /*  
     //This options better setup in Unreal Editor
-    SpringArm->SocketOffset = FVector(0.f, 100.f, 50.f);
+    SpringArm->SocketOffset = FVector(0.f, 100.f, 100.f);
     SpringArm->bUsePawnControlRotation = true;
     */
 
@@ -24,6 +24,7 @@ void AEPBaseCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	
+    SpawnWeapon();
 }
 
 
@@ -47,6 +48,32 @@ void AEPBaseCharacter::MoveForward(float Amount)
 void AEPBaseCharacter::MoveRight(float Amount)
 {
     AddMovementInput(GetActorRightVector(), Amount);
+}
+
+float AEPBaseCharacter::GetMovementDirection() const
+{
+    if (GetVelocity().IsZero()) return 0.f;
+
+    const auto VelocityVector = GetVelocity().GetSafeNormal();
+    const auto AngleBetween = FMath::Acos(FVector::DotProduct(GetActorForwardVector(), VelocityVector));
+    const auto CrossPoduct = FVector::CrossProduct(GetActorForwardVector(), VelocityVector);
+    const auto Degreese = FMath::RadiansToDegrees(AngleBetween);
+
+    return CrossPoduct.IsZero() ? Degreese : Degreese * FMath::Sign(CrossPoduct.Z);
+}
+
+void AEPBaseCharacter::SpawnWeapon()
+{
+    if (!GetWorld()) return;
+
+    const auto Weapon = GetWorld()->SpawnActor<AEPBaseWeapon>(PlayerWeapon);
+    if (Weapon)
+    {
+        FAttachmentTransformRules AttachmentRules(EAttachmentRule::SnapToTarget, false);
+        Weapon->AttachToComponent(GetMesh(),AttachmentRules, "WeaponSocket");
+    }
+    
+
 }
 
 
