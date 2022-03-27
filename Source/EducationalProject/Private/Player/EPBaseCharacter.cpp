@@ -2,13 +2,16 @@
 
 
 #include "EPBaseCharacter.h"
+#include "Components/EPCharacterMovementComponent.h"
 
-AEPBaseCharacter::AEPBaseCharacter()
+/* Using this type of Constructor to change Default CharacterMovementComponent to Custom class*/
+AEPBaseCharacter::AEPBaseCharacter(const FObjectInitializer& ObjInit)
+    : Super(ObjInit.SetDefaultSubobjectClass<UEPCharacterMovementComponent>(ACharacter::CharacterMovementComponentName))
 {
 	PrimaryActorTick.bCanEverTick = false;
 
     SpringArm = CreateDefaultSubobject<USpringArmComponent>("SprengArm");
-    SpringArm->SetupAttachment(RootComponent);
+    SpringArm->SetupAttachment(GetRootComponent());
     
     /*  
     //This options better setup in Unreal Editor
@@ -35,22 +38,15 @@ void AEPBaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
     PlayerInputComponent->BindAxis("MoveForward", this, &AEPBaseCharacter::MoveForward);
     PlayerInputComponent->BindAxis("MoveRight", this, &AEPBaseCharacter::MoveRight);
-    
+    /* Mouse veiw */
     PlayerInputComponent->BindAxis("LookUp", this, &AEPBaseCharacter::AddControllerPitchInput);
     PlayerInputComponent->BindAxis("TurnAround", this, &AEPBaseCharacter::AddControllerYawInput);
+    /* Make character move faster */
+    PlayerInputComponent->BindAction("Run", IE_Pressed, this, &AEPBaseCharacter::StartRunning);
+    PlayerInputComponent->BindAction("Run", IE_Released, this, &AEPBaseCharacter::StopRunning);
 
 }
-
-void AEPBaseCharacter::MoveForward(float Amount)
-{
-    AddMovementInput(GetActorForwardVector(), Amount);
-}
-
-void AEPBaseCharacter::MoveRight(float Amount)
-{
-    AddMovementInput(GetActorRightVector(), Amount);
-}
-
+/* Use this function in animation blueprint to set direction in statemachine */
 float AEPBaseCharacter::GetMovementDirection() const
 {
     if (GetVelocity().IsZero()) return 0.f;
@@ -63,4 +59,30 @@ float AEPBaseCharacter::GetMovementDirection() const
     return CrossPoduct.IsZero() ? Degreese : Degreese * FMath::Sign(CrossPoduct.Z);
 }
 
+bool AEPBaseCharacter::IsRunning() const
+{
+    /* By checking velocity exclude character in variouse trap or stuck in textures */
+    return bWantsToRun && bIsMoveForward && !GetVelocity().IsZero();
+}
+
+void AEPBaseCharacter::MoveForward(float Amount)
+{
+    bIsMoveForward = Amount > 0.f;
+    AddMovementInput(GetActorForwardVector(), Amount);
+}
+
+void AEPBaseCharacter::MoveRight(float Amount)
+{
+    AddMovementInput(GetActorRightVector(), Amount);
+}
+
+void AEPBaseCharacter::StartRunning()
+{
+    bWantsToRun = true;
+}
+
+void AEPBaseCharacter::StopRunning()
+{
+    bWantsToRun = false;
+}
 
