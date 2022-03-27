@@ -14,7 +14,10 @@ public class EducationalProject : ModuleRules
 		
 		PublicIncludePaths.AddRange(new string[] 
 		{
-			"EducationalProject/Public/Player"
+			"EducationalProject/Public/Player",
+			"EducationalProject/Public/Weapon",
+			"EducationalProject/Public/Components"
+
 		});
 
 		// Uncomment if you are using Slate UI

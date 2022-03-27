@@ -9,12 +9,16 @@ AEPBaseWeapon::AEPBaseWeapon()
     
     WeaponMesh = CreateDefaultSubobject<USkeletalMeshComponent>("WeaponMesh");
     SetRootComponent(WeaponMesh);
-
 }
 
 void AEPBaseWeapon::BeginPlay()
 {
 	Super::BeginPlay();
 	
+}
+
+void AEPBaseWeapon::Fire()
+{
+    
 }
 
