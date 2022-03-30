@@ -22,13 +22,14 @@ AEPBaseCharacter::AEPBaseCharacter(const FObjectInitializer& ObjInit)
     Camera = CreateDefaultSubobject<UCameraComponent>("Camera");
     Camera->SetupAttachment(SpringArm);
 
+    HealthComponent = CreateDefaultSubobject<UEPHealthComponent>("HealthComponent");
+
     WeaponComponent = CreateDefaultSubobject<UEPWeaponComponent>("WeaponComponent");
 }
 
 void AEPBaseCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 
 
@@ -54,9 +55,8 @@ float AEPBaseCharacter::GetMovementDirection() const
     const auto VelocityVector = GetVelocity().GetSafeNormal();
     const auto AngleBetween = FMath::Acos(FVector::DotProduct(GetActorForwardVector(), VelocityVector));
     const auto CrossPoduct = FVector::CrossProduct(GetActorForwardVector(), VelocityVector);
-    const auto Degreese = FMath::RadiansToDegrees(AngleBetween);
-
-    return CrossPoduct.IsZero() ? Degreese : Degreese * FMath::Sign(CrossPoduct.Z);
+    const auto Degrees = FMath::RadiansToDegrees(AngleBetween);
+    return CrossPoduct.IsZero() ? Degrees : Degrees * FMath::Sign(CrossPoduct.Z);
 }
 
 bool AEPBaseCharacter::IsRunning() const
@@ -67,6 +67,7 @@ bool AEPBaseCharacter::IsRunning() const
 
 void AEPBaseCharacter::MoveForward(float Amount)
 {
+    if (FMath::IsNearlyZero(Amount)) return;
     bIsMoveForward = Amount > 0.f;
     AddMovementInput(GetActorForwardVector(), Amount);
 }
