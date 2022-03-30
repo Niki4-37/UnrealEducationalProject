@@ -13,6 +13,7 @@
 #include "Components/TimelineComponent.h"
 #include "Components/InputComponent.h"
 
+#include "Components/EPHealthComponent.h"
 #include "Components/EPWeaponComponent.h"
 
 
@@ -20,6 +21,7 @@
 
 class USpringArmComponent;
 class UCameraComponent;
+class UEPHealthComponent;
 class UEPWeaponComponent;
 
 UCLASS()
@@ -36,6 +38,9 @@ protected:
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Camera")
     UCameraComponent* Camera;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Health")
+    UEPHealthComponent* HealthComponent;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
     UEPWeaponComponent* WeaponComponent;
