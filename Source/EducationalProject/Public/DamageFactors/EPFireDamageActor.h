@@ -6,6 +6,8 @@
 #include "GameFramework/Actor.h"
 #include "EPFireDamageActor.generated.h"
 
+class UEPFireDamageType;
+
 UCLASS()
 class EDUCATIONALPROJECT_API AEPFireDamageActor : public AActor
 {

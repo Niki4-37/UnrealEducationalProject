@@ -16,7 +16,8 @@ public class EducationalProject : ModuleRules
 		{
 			"EducationalProject/Public/Player",
 			"EducationalProject/Public/Weapon",
-			"EducationalProject/Public/Components"
+			"EducationalProject/Public/Components",
+            "EducationalProject/Public/DamageFactors"
 
 		});
 

@@ -2,7 +2,7 @@
 
 
 #include "Components/EPCharacterMovementComponent.h"
-#include "Player/EPBaseCharacter.h"
+#include "Player/EPBaseCharacter.h" //Makes error Circular Dependencies in compiler
 
 float UEPCharacterMovementComponent::GetMaxSpeed() const
 {

@@ -5,7 +5,6 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Camera/CameraComponent.h"
-#include "Engine/Engine.h"
 
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/Controller.h"
@@ -47,7 +46,9 @@ protected:
     
 	virtual void BeginPlay() override;
 
-public:	
+public:
+    virtual void Tick(float DeltaTime) override;
+    	
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
     
     UFUNCTION(BlueprintCallable, Category = "Movement")
@@ -65,4 +66,6 @@ private:
     bool bWantsToRun = false;
     void StartRunning();
     void StopRunning();
+
+    void OnDeath();
 };

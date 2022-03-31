@@ -1,24 +1,25 @@
 // For educational purposes only.
 
-#include "DamageFactors/EPFireDamageActor.h"
-#include "DrawDebugHelpers.h"
-#include "Kismet/GameplayStatics.h"
-#include "DamageFactors/EPFireDamageType.h"
 
-AEPFireDamageActor::AEPFireDamageActor()
+#include "DamageFactors/EPDamegeActor.h"
+#include "Kismet/GameplayStatics.h"
+#include "DrawDebugHelpers.h"
+#include "Engine/World.h"
+
+AEPDamegeActor::AEPDamegeActor()
 {
 	PrimaryActorTick.bCanEverTick = true;
-
-    SceneComponent = CreateDefaultSubobject<USceneComponent>("FireDamage");
+    SceneComponent = CreateDefaultSubobject<USceneComponent>("DamageActor");
     SetRootComponent(SceneComponent);
 }
 
-void AEPFireDamageActor::BeginPlay()
+void AEPDamegeActor::BeginPlay()
 {
 	Super::BeginPlay();
+	
 }
 
-void AEPFireDamageActor::Tick(float DeltaTime)
+void AEPDamegeActor::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
@@ -28,7 +29,7 @@ void AEPFireDamageActor::Tick(float DeltaTime)
         Damage,
         GetActorLocation(),
         SphereRadius,
-        UEPFireDamageType::StaticClass(),   // Using child class to set fire damage type
+        DamageType,
         {},
         this,
         nullptr,

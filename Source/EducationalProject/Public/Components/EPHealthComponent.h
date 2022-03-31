@@ -6,6 +6,7 @@
 #include "Components/ActorComponent.h"
 #include "EPHealthComponent.generated.h"
 
+DECLARE_MULTICAST_DELEGATE(FOnDeathSignature);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class EDUCATIONALPROJECT_API UEPHealthComponent : public UActorComponent
@@ -16,6 +17,10 @@ public:
 	UEPHealthComponent();
     
     float GetHealth() const { return Health; };
+
+    bool IsDead() const { return Health <= 0.f; };
+
+    FOnDeathSignature OnDeath;
 
     UFUNCTION(BlueprintCallable, Category = "Health")
     float GetHealthPercent() const { return Health / MaxHealth; };

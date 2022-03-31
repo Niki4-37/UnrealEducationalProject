@@ -3,12 +3,13 @@
 
 #include "EPBaseCharacter.h"
 #include "Components/EPCharacterMovementComponent.h"
+#include "Engine/Engine.h"
 
 /* Using this type of Constructor to change Default CharacterMovementComponent to Custom class*/
 AEPBaseCharacter::AEPBaseCharacter(const FObjectInitializer& ObjInit)
     : Super(ObjInit.SetDefaultSubobjectClass<UEPCharacterMovementComponent>(ACharacter::CharacterMovementComponentName))
 {
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
 
     SpringArm = CreateDefaultSubobject<USpringArmComponent>("SprengArm");
     SpringArm->SetupAttachment(GetRootComponent());
@@ -30,6 +31,22 @@ AEPBaseCharacter::AEPBaseCharacter(const FObjectInitializer& ObjInit)
 void AEPBaseCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+    check(HealthComponent);
+    check(GetMesh());
+    /* Get Delegate from Health Component and bind function. AddUObject binds only C++ delegate */
+    HealthComponent->OnDeath.AddUObject(this, &AEPBaseCharacter::OnDeath);
+}
+
+void AEPBaseCharacter::Tick(float DeltaTime)
+{
+    Super::Tick(DeltaTime);
+
+    /* Debugging */
+    if (GEngine)
+    {
+        GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Emerald, FString::SanitizeFloat(HealthComponent->GetHealth()));
+    }
 }
 
 
@@ -85,5 +102,13 @@ void AEPBaseCharacter::StartRunning()
 void AEPBaseCharacter::StopRunning()
 {
     bWantsToRun = false;
+}
+/* Function binded to HealthComponent FOnDeath delegate*/
+void AEPBaseCharacter::OnDeath()
+{
+    GetCharacterMovement()->DisableMovement();
+    /* Add phisics, makes Plyer ragdoll*/
+    GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+    GetMesh()->SetSimulatePhysics(true);
 }
 
