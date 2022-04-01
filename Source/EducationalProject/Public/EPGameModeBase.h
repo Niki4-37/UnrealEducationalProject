@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
-#include "Player/EPBaseCharacter.h"
 
 #include "EPGameModeBase.generated.h"
 

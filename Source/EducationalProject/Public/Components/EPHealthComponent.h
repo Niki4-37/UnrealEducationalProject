@@ -26,7 +26,7 @@ public:
     float GetHealthPercent() const { return Health / MaxHealth; };
 
 protected:
-    UPROPERTY(EditdefaultsOnly, BlueprintReadWrite)
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
     float MaxHealth = 100.f;
 
 	virtual void BeginPlay() override;
