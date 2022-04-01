@@ -16,8 +16,9 @@ UEPHealthComponent::UEPHealthComponent()
 void UEPHealthComponent::BeginPlay()
 {
 	Super::BeginPlay();
-
-    Health = MaxHealth;
+    /* to prevent zero division in GetHealthPercent() */
+    check(MaxHealth > 0);
+    SetHaelth(MaxHealth);
     /* GetOwner() ActorComponent's class method gets pointer to Actor which belongs this component */
     AActor* ComponentOwner = GetOwner();
     if (ComponentOwner)

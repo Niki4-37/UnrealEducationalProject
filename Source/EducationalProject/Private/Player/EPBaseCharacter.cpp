@@ -42,11 +42,6 @@ void AEPBaseCharacter::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
 
-    /* Debugging */
-    if (GEngine)
-    {
-        GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Emerald, FString::SanitizeFloat(HealthComponent->GetHealth()));
-    }
 }
 
 
