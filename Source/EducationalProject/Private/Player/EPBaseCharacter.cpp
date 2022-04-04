@@ -57,6 +57,11 @@ void AEPBaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
     /* Make character move faster */
     PlayerInputComponent->BindAction("Run", IE_Pressed, this, &AEPBaseCharacter::StartRunning);
     PlayerInputComponent->BindAction("Run", IE_Released, this, &AEPBaseCharacter::StopRunning);
+    /* Shooting */
+    PlayerInputComponent->BindAction("Fire", IE_Pressed, WeaponComponent, &UEPWeaponComponent::Fire);
+    /* Aiming */
+    PlayerInputComponent->BindAction("Aiming", IE_Pressed, this, &AEPBaseCharacter::StartAiming);
+    PlayerInputComponent->BindAction("Aiming", IE_Released, this, &AEPBaseCharacter::StopAiming);
 
 }
 /* Use this function in animation blueprint to set direction in statemachine */
@@ -105,5 +110,15 @@ void AEPBaseCharacter::OnDeath()
     /* Add phisics, makes Plyer ragdoll*/
     GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
     GetMesh()->SetSimulatePhysics(true);
+}
+
+void AEPBaseCharacter::StartAiming()
+{
+    bIsAiming = true;
+}
+
+void AEPBaseCharacter::StopAiming()
+{
+    bIsAiming = false;
 }
 

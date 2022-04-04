@@ -57,6 +57,9 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Movement")
     bool IsRunning() const;
 
+    UFUNCTION(BlueprintCallable, Category = "Animation")
+    bool IsAiming() const { return bIsAiming; };
+
 private:
     void MoveForward(float Amount);
     void MoveRight(float Amount);
@@ -66,6 +69,10 @@ private:
     bool bWantsToRun = false;
     void StartRunning();
     void StopRunning();
-
+    /* Function binded to HealthComponent FOnDeath delegate*/
     void OnDeath();
+    /* Aiming process */
+    bool bIsAiming = false;
+    void StartAiming();
+    void StopAiming();
 };
