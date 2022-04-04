@@ -24,7 +24,7 @@ void UEPWeaponComponent::BeginPlay()
 
 void UEPWeaponComponent::SpawnWeapon()
 {
-    ACharacter* Player = Cast<AEPBaseCharacter>(GetOwner());
+    ACharacter* Player = Cast<ACharacter>(GetOwner());
     
     if (!GetWorld() || !Player) return;
 
@@ -33,4 +33,5 @@ void UEPWeaponComponent::SpawnWeapon()
     
     FAttachmentTransformRules AttachmentRules(EAttachmentRule::SnapToTarget, false);
     CurrentWeapon->AttachToComponent(Player->GetMesh(), AttachmentRules, WeaponAttachPointName);
+    CurrentWeapon->SetOwner(Player);
 }
