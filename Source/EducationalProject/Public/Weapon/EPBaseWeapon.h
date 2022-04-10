@@ -29,7 +29,18 @@ protected:
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Weapon")
     float BulletFlyMaxDistace = 1500.f;
 
+    /* Settings for current weapon type*/
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Weapon")
+    float BulletForce = 1000.f;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Weapon")
+    float WeaponDamage = 10.f;
+
 	virtual void BeginPlay() override;
+
+    APlayerController* GetPlayerController() const;
+    bool GetPlayerVeiwpoint(FVector& VeiwLocation, FRotator& VeiwRotation) const;
+    bool GetTraceData(FVector& TraceStart, FVector& TraceEnd) const;
 
     void MakeShot();
 

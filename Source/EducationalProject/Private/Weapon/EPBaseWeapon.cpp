@@ -6,6 +6,9 @@
 #include "DrawDebugHelpers.h"
 #include "GameFramework/Controller.h"
 #include "GameFramework/Character.h"
+#include "Kismet/GameplayStatics.h"
+
+#include "Engine.h"
 
 AEPBaseWeapon::AEPBaseWeapon()
 {
@@ -22,35 +25,107 @@ void AEPBaseWeapon::BeginPlay()
     check(WeaponMesh);
 }
 
+APlayerController* AEPBaseWeapon::GetPlayerController() const
+{
+    /* To get PlayerController of this Weapon needs several steps:
+        GetOwner() returns Actor so make Cast to Character to get it's controller, 
+        check pointer, return Controller */
+    const auto Player = Cast<ACharacter>(GetOwner());
+    if (!Player) return nullptr;
+    return Player->GetController<APlayerController>();
+}
+
+bool AEPBaseWeapon::GetPlayerVeiwpoint(FVector& VeiwLocation, FRotator& VeiwRotation) const
+{
+    if (!GetPlayerController()) return false;
+    GetPlayerController()->GetPlayerViewPoint(VeiwLocation, VeiwRotation);
+
+    return true;
+}
+
+bool AEPBaseWeapon::GetTraceData(FVector& TraceStart, FVector& TraceEnd) const
+{
+    FVector VeiwLocation;
+    FRotator VeiwRotation;
+    if (!GetPlayerVeiwpoint(VeiwLocation, VeiwRotation)) return false;
+    
+    TraceStart = VeiwLocation;
+    //TraceStart = WeaponMesh->GetSocketLocation(MuzzleSocketName);
+    TraceEnd = VeiwLocation + VeiwRotation.Vector() * BulletFlyMaxDistace;
+    
+    return true;
+}
+
 void AEPBaseWeapon::MakeShot()
 {
     const auto Player = Cast<ACharacter>(GetOwner());
     if (!GetWorld() || !Player) return;
-    const auto Controller = Player->GetController<APlayerController>();
+    const auto Controller = GetPlayerController();
     if (!Controller) return;
 
-    FVector VeiwLocation;
-    FRotator VeiwRotation;
-    Controller->GetPlayerViewPoint(VeiwLocation, VeiwRotation);
-    
-    const FVector BulletStart = WeaponMesh->GetSocketLocation(MuzzleSocketName);
-    const FVector Direction = VeiwRotation.Vector();
-    const FVector BulletFinish = BulletStart + Direction * BulletFlyMaxDistace;
+    FVector TraceStart, TraceEnd;
+    if (!GetTraceData(TraceStart, TraceEnd)) return;
     
     FCollisionQueryParams CollisionParams;
 
     FHitResult HitResult;
-    GetWorld()->LineTraceSingleByChannel(HitResult, BulletStart, BulletFinish, ECollisionChannel::ECC_Visibility, CollisionParams);
+    
+    //Viewport Size
+    //const FVector2D ViewportSize = FVector2D(GEngine->GameViewport->Viewport->GetSizeXY());
+    //Viewport Center!            
+    //const FVector2D  ViewportCenter = FVector2D(ViewportSize.X / 2, ViewportSize.Y / 2);
+
+    //Controller->GetHitResultAtScreenPosition(ViewportCenter, ECollisionChannel::ECC_Visibility, false, HitResult);
+    GetWorld()->LineTraceSingleByChannel(HitResult, TraceStart, TraceEnd, ECollisionChannel::ECC_Visibility, CollisionParams);
+    
+    //const FVector CrosshairLocation = HitResult.bBlockingHit ? HitResult.ImpactPoint : TraceEnd;
+    //const FVector CrosshairLocation = HitResult.Location;
+
+    //GetWorld()->LineTraceSingleByChannel(HitResult, CrosshairLocation, WeaponMesh->GetSocketLocation(MuzzleSocketName), ECollisionChannel::ECC_Visibility, CollisionParams);
     
     if (HitResult.bBlockingHit)
     {
-        DrawDebugLine(GetWorld(), BulletStart, HitResult.ImpactPoint, FColor::Cyan, false, 1.f);
-        DrawDebugSphere(GetWorld(), HitResult.ImpactPoint, 25.f, 24, FColor::Blue, false, 2.f);
+        DrawDebugLine(GetWorld(), WeaponMesh->GetSocketLocation(MuzzleSocketName), HitResult.ImpactPoint, FColor::Cyan, false, 5.f);
+        DrawDebugSphere(GetWorld(), HitResult.ImpactPoint, 5.f, 24, FColor::Blue, false, 5.f);
+/////////////////////
+        const auto DamageActor = HitResult.GetActor();
+        if (!DamageActor) return;
+        UE_LOG(LogTemp, Display, TEXT("ActorDamaged! %s"), *HitResult.BoneName.ToString());
+        
+        UGameplayStatics::ApplyPointDamage(
+            DamageActor, 
+            WeaponDamage, 
+            TraceEnd,
+            HitResult, 
+            Controller, 
+            Player, 
+            nullptr //TSubclassOf<UDamageType> DamageTypeClass
+        );
+        /* What inside UGameplayStatics::ApplyPointDamage =======>
+        FVector HitFromDirection = TraceEnd;
+        TSubclassOf<UDamageType> const ValidDamageTypeClass = DamageTypeClass ? DamageTypeClass : TSubclassOf<UDamageType>(UDamageType::StaticClass());
+		FPointDamageEvent PointDamageEvent(BaseDamage, HitResult, HitFromDirection, ValidDamageTypeClass);
+
+        DamageActor->TakeDamage(BaseDamage, PointDamageEvent, EventInstigator, DamageCauser)
+        */
+
+        /* Old version ApplyAnyDamage 
+        DamageActor->TakeDamage(10.f, FDamageEvent(), Controller, this);
+        */
+        /*
+        const auto Character = Cast<ACharacter>(DamageActor);
+        if (Character)
+        {
+            Character->GetMesh()->AddForce(WeaponMesh->GetSocketLocation(MuzzleSocketName) * BulletForce, HitResult.BoneName);
+        }
+        */
+////////////////////
     }
     else
     {
-        DrawDebugLine(GetWorld(), BulletStart, BulletFinish, FColor::Purple, false, 1.f);
+        DrawDebugLine(GetWorld(), WeaponMesh->GetSocketLocation(MuzzleSocketName), TraceEnd, FColor::Purple, false, 5.f);
     }
+    
 }
 
 void AEPBaseWeapon::Fire()
