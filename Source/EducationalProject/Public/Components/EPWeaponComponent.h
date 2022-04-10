@@ -5,7 +5,6 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Weapon/EPBaseWeapon.h"
-#include "Player/EPBaseCharacter.h"
 
 #include "EPWeaponComponent.generated.h"
 

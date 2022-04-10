@@ -2,6 +2,7 @@
 
 
 #include "Components/EPWeaponComponent.h"
+#include "Player/EPBaseCharacter.h"
 
 UEPWeaponComponent::UEPWeaponComponent()
 {
@@ -11,8 +12,9 @@ UEPWeaponComponent::UEPWeaponComponent()
 
 void UEPWeaponComponent::Fire()
 {
-    if (!CurrentWeapon) return;
-    CurrentWeapon->Fire();
+    const auto Player = Cast<AEPBaseCharacter>(GetOwner());
+    if (!CurrentWeapon || !Player) return;
+    if (Player->IsAiming()) CurrentWeapon->Fire();
 }
 
 void UEPWeaponComponent::BeginPlay()
