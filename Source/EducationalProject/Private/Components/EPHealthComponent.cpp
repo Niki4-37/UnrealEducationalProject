@@ -25,6 +25,8 @@ void UEPHealthComponent::BeginPlay()
     {
         /* Get Actor's delegate and bind (AddDynamic for Multicast Delegate) local function OnTakeAnyDamage(...) */
         ComponentOwner->OnTakeAnyDamage.AddDynamic(this, &UEPHealthComponent::OnTakeAnyDamage);
+
+        ComponentOwner->OnTakePointDamage.AddDynamic(this, &UEPHealthComponent::OnTakePointDamage);
     }
     
 }
@@ -33,6 +35,7 @@ void UEPHealthComponent::SetHaelth(float NewHealth)
 {
     Health = FMath::Clamp(NewHealth, 0.f, MaxHealth);
 }
+
 /* Create local function with equal params which difined in Actor's FTakeAnyDamageSignature OnTakeAnyDamage delegate*/
 void UEPHealthComponent::OnTakeAnyDamage(AActor* DamagedActor, float Damage, const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser)
 {
@@ -49,10 +52,26 @@ void UEPHealthComponent::OnTakeAnyDamage(AActor* DamagedActor, float Damage, con
         }
     }
 
-    if (IsDead())
-    {
-        OnDeath.Broadcast();
-    }
+    //if (IsDead())
+    //{
+    //    OnDeath.Broadcast(FVector::ZeroVector, FName("none"));
+    //}
 }
 
+void UEPHealthComponent::OnTakePointDamage (
+    AActor* DamagedActor,
+    float Damage, 
+    class AController* InstigatedBy,
+    FVector HitLocation,
+    class UPrimitiveComponent* FHitComponent,
+    FName BoneName, 
+    FVector ShotFromDirection,
+    const class UDamageType* DamageType, 
+    AActor* DamageCauser)
+{
+    if (IsDead())
+    {
+        OnDeath.Broadcast(ShotFromDirection, BoneName);
+    }
+}
 

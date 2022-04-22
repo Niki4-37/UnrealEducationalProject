@@ -70,7 +70,8 @@ private:
     void StartRunning();
     void StopRunning();
     /* Function binded to HealthComponent FOnDeath delegate*/
-    void OnDeath();
+    void OnDeath(FVector ShotFromDirection, FName BoneName);
+
     /* Aiming process */
     bool bIsAiming = false;
     void StartAiming();

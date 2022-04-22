@@ -104,7 +104,7 @@ void AEPBaseCharacter::StopRunning()
     bWantsToRun = false;
 }
 /* Function binded to HealthComponent FOnDeath delegate*/
-void AEPBaseCharacter::OnDeath()
+void AEPBaseCharacter::OnDeath(FVector ShotFromDirection, FName BoneName)
 {
     GetCharacterMovement()->DisableMovement();
     /* Add phisics, makes Plyer ragdoll*/
