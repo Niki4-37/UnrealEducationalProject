@@ -18,7 +18,8 @@ public class EducationalProject : ModuleRules
 			"EducationalProject/Public/Weapon",
 			"EducationalProject/Public/Components",
             "EducationalProject/Public/DamageFactors",
-            "EducationalProject/Public/UI"
+            "EducationalProject/Public/UI",
+            "EducationalProject/Public/AI"
 		});
 
 		// Uncomment if you are using Slate UI
