@@ -6,6 +6,8 @@ DEFINE_LOG_CATEGORY_STATIC(HealthComponent, All, All)
 #include "GameFramework/Actor.h"
 /* Add damage types */
 #include "DamageFactors/EPFireDamageType.h"
+/* */
+#include "EPGameModeBase.h"
 
 UEPHealthComponent::UEPHealthComponent()
 {
@@ -72,6 +74,12 @@ void UEPHealthComponent::OnTakePointDamage (
     if (IsDead())
     {
         OnDeath.Broadcast(ShotFromDirection, BoneName);
+        
+        /* GameMode function GetAllBots() starts TimerManager with respawning function */
+        if (!GetWorld()) return;
+        const auto GameMode = GetWorld()->GetAuthGameMode<AEPGameModeBase>();
+        if (!GameMode) return;
+        GameMode->GetAllBots();
     }
 }
 

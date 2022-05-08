@@ -14,7 +14,7 @@ AEPAICharacter::AEPAICharacter()
 	HealthComponent = CreateDefaultSubobject<UEPHealthComponent>("HealthComponent");
     PrimaryActorTick.bCanEverTick = false;
     
-    AutoPossessAI = EAutoPossessAI::Disabled;
+    AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned; //Disabled
     AIControllerClass = AEPAIController::StaticClass();
 
     bUseControllerRotationYaw = false;
@@ -48,7 +48,9 @@ void AEPAICharacter::OnDeath(FVector ShotFromDirection, FName BoneName)
         AIController->BrainComponent->Cleanup();
     }
 
-    GetMesh()->AddForce(ShotFromDirection * 1000, BoneName);
+    GetMesh()->AddForce(ShotFromDirection * 500, BoneName);
+    /* destroy actor after given time */
+    SetLifeSpan(5.f);   //destroy after death and make change with staticmesh
 }
 
 
