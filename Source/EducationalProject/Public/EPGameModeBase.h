@@ -7,6 +7,9 @@
 
 #include "EPGameModeBase.generated.h"
 
+//class AEPSpawningActor;
+class AEPAICharacter;
+
 UCLASS()
 class EDUCATIONALPROJECT_API AEPGameModeBase : public AGameModeBase
 {
@@ -14,4 +17,40 @@ class EDUCATIONALPROJECT_API AEPGameModeBase : public AGameModeBase
 	
 public:
     AEPGameModeBase();
+
+    virtual void StartPlay() override;
+
+    int32 GetBotsNum() const { return BotsNum; }
+
+    void GetAllBots();
+
+protected:
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Game")
+    int32 BotsNum = 10;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Game", meta = (ClampMin = "0", ClampMax = "10"))
+    float RespawningTime = 2.f;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Game")
+    TSubclassOf<AActor> SpawningActorClass;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Game")
+    TSubclassOf<ACharacter> BotClass;
+
+private:
+    bool bCanSpawn = true;
+    FTimerHandle SpawningCountdown;
+
+    TArray<AActor*> SpawningActorsList;
+
+    TArray<AActor*> BotsList;
+    
+    void GetAllSpawningActors();
+
+
+
+    void SpawnBot();
+
+    void OnDeath(FVector ShotFromDirection, FName BoneName);
+    
 };
