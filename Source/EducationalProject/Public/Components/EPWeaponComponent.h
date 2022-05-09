@@ -19,6 +19,8 @@ public:
 	UEPWeaponComponent();
     
     void Fire();
+    /* use this info in widget*/
+    bool GetAmmoData(FAmmoData& Data) const;
 
 protected:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
@@ -28,8 +30,6 @@ protected:
     FName WeaponAttachPointName = "WeaponSocket";
     
 	virtual void BeginPlay() override;
-
-public:	
 
 private:
     UPROPERTY()

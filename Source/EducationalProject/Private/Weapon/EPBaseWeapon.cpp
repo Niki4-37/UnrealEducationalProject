@@ -7,6 +7,7 @@
 #include "GameFramework/Controller.h"
 #include "GameFramework/Character.h"
 #include "Kismet/GameplayStatics.h"
+#include "Components/SkeletalMeshComponent.h"
 
 #include "Engine.h"
 
@@ -18,17 +19,24 @@ AEPBaseWeapon::AEPBaseWeapon()
     SetRootComponent(WeaponMesh);
 }
 
+void AEPBaseWeapon::Fire()
+{
+    MakeShot();
+}
+
 void AEPBaseWeapon::BeginPlay()
 {
 	Super::BeginPlay();
 	
     check(WeaponMesh);
+
+    CurrentAmmo = DefaultAmmo;
 }
 
 APlayerController* AEPBaseWeapon::GetPlayerController() const
 {
     /* To get PlayerController of this Weapon needs several steps:
-        GetOwner() returns Actor so make Cast to Character to get it's controller, 
+        GetOwner() returns Actor to make Cast to Character to get it's controller, 
         check pointer, return Controller */
     const auto Player = Cast<ACharacter>(GetOwner());
     if (!Player) return nullptr;
@@ -59,7 +67,7 @@ bool AEPBaseWeapon::GetTraceData(FVector& TraceStart, FVector& TraceEnd) const
 void AEPBaseWeapon::MakeShot()
 {
     const auto Player = Cast<ACharacter>(GetOwner());
-    if (!GetWorld() || !Player) return;
+    if (!GetWorld() || !Player || IsAmmoEmpty()) return;
     const auto Controller = GetPlayerController();
     if (!Controller) return;
 
@@ -126,10 +134,32 @@ void AEPBaseWeapon::MakeShot()
         DrawDebugLine(GetWorld(), WeaponMesh->GetSocketLocation(MuzzleSocketName), TraceEnd, FColor::Purple, false, 5.f);
     }
     
+    DecreaseAmmo();
 }
 
-void AEPBaseWeapon::Fire()
+void AEPBaseWeapon::DecreaseAmmo()
 {
-    MakeShot();
+    --CurrentAmmo.Bullets;
+    if (IsClipEmpty() && !IsAmmoEmpty())
+    {
+        ChangeClip();
+    }
 }
+
+bool AEPBaseWeapon::IsClipEmpty() const
+{
+    return CurrentAmmo.Bullets == 0;
+}
+
+bool AEPBaseWeapon::IsAmmoEmpty() const
+{
+    return IsClipEmpty() && CurrentAmmo.Clips == 0;
+}
+
+void AEPBaseWeapon::ChangeClip()
+{
+    CurrentAmmo.Bullets = DefaultAmmo.Bullets;
+    --CurrentAmmo.Clips;
+}
+
 

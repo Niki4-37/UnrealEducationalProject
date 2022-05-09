@@ -17,6 +17,17 @@ void UEPWeaponComponent::Fire()
     if (Player->IsAiming()) CurrentWeapon->Fire();
 }
 
+/* use decorate bool function, which takes reference as a param to rewrites info about Current Weapon ammo */
+bool UEPWeaponComponent::GetAmmoData(FAmmoData& Data) const
+{
+    if (CurrentWeapon)
+    {
+        Data = CurrentWeapon->GetCurrentAmmo();
+        return true;
+    }
+    return false;
+}
+
 void UEPWeaponComponent::BeginPlay()
 {
 	Super::BeginPlay();
