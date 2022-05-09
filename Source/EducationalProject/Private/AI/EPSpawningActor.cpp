@@ -26,7 +26,6 @@ void AEPSpawningActor::SpawnBot()
     SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
     const auto NewPawn = GetWorld()->SpawnActor<APawn>(PawnClass, GetActorLocation(), GetActorRotation(), SpawnParams);
-
     if (!NewPawn) return;
 
     if (!NewPawn->Controller)

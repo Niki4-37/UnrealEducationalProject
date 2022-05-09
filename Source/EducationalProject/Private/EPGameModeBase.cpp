@@ -39,6 +39,7 @@ void AEPGameModeBase::GetAllBots()
 
 void AEPGameModeBase::SpawnBot()
 {
+    if (SpawningActorsList.Num() == 0) return;
     const auto RandomSpawnerIndex = FMath::RandHelper(SpawningActorsList.Num());
     const auto RandomSpawningActor = Cast<AEPSpawningActor>(SpawningActorsList[RandomSpawnerIndex]);
     if (!RandomSpawningActor) return;
