@@ -8,7 +8,15 @@ public class EducationalProject : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 	
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore" });
+		PublicDependencyModuleNames.AddRange(new string[] 
+        { 
+            "Core", 
+            "CoreUObject", 
+            "Engine", 
+            "InputCore",
+            "GameplayTasks",    //Add AI in game to avoid linker error LNK2001
+            "NavigationSystem"  //Add AI in game
+        });
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
 		
@@ -19,7 +27,8 @@ public class EducationalProject : ModuleRules
 			"EducationalProject/Public/Components",
             "EducationalProject/Public/DamageFactors",
             "EducationalProject/Public/UI",
-            "EducationalProject/Public/AI"
+            "EducationalProject/Public/AI",
+            "EducationalProject/Public/AI/Services"
 		});
 
 		// Uncomment if you are using Slate UI
