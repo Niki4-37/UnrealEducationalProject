@@ -16,7 +16,8 @@ float UEPPlayerWidget::GetHealthPercent() const
     //const auto HealthComponent = Cast<UEPHealthComponent>(Component);
     /*====================================================*/
 
-    const auto HealthComponent = GetPlayerComponentByClass<UEPHealthComponent>(GetOwningPlayerPawn());
+    const auto HealthComponent = GetOwningPlayerPawn()->FindComponentByClass<UEPHealthComponent>();
+    //const auto HealthComponent = GetPlayerComponentByClass<UEPHealthComponent>(GetOwningPlayerPawn());
     if (!HealthComponent) return 0.f;
 
     return HealthComponent->GetHealthPercent();
