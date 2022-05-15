@@ -20,16 +20,16 @@ public:
 
     virtual void StartPlay() override;
 
-    int32 GetBotsNum() const { return BotsNum; }
+    //int32 GetBotsNum() const { return BotsNum; }
 
-    void GetAllBots();
+    void StartSpawningProcess();
 
 protected:
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Game")
     int32 BotsNum = 10;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Game", meta = (ClampMin = "0", ClampMax = "10"))
-    float RespawningTime = 2.f;
+    float RespawningDelay = 2.f;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Game")
     TSubclassOf<AActor> SpawningActorClass;
@@ -47,10 +47,9 @@ private:
     
     void GetAllSpawningActors();
 
-
+    void GetAllBots();
 
     void SpawnBot();
 
-    void OnDeath(FVector ShotFromDirection, FName BoneName);
     
 };

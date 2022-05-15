@@ -36,5 +36,4 @@ private:
     AEPBaseWeapon* CurrentWeapon = nullptr;
     
     void SpawnWeapon();
-
 };

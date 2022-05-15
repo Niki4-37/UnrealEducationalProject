@@ -46,7 +46,7 @@ protected:
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Weapon")
     FAmmoData DefaultAmmo{ 10, 5 };
 
-    /* Settings for current weapon type*/
+    /* Use it to add impulse to body */
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Weapon")
     float BulletForce = 1000.f;
 

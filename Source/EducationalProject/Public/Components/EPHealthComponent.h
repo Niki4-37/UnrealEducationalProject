@@ -41,4 +41,17 @@ private:
 
     UFUNCTION()
     void OnTakePointDamage (AActor* DamagedActor, float Damage, class AController* InstigatedBy, FVector HitLocation, class UPrimitiveComponent* FHitComponent, FName BoneName, FVector ShotFromDirection, const class UDamageType* DamageType, AActor* DamageCauser);
+
+    UFUNCTION()
+    void OnDestroyed(AActor* DestroyedActor);
+
+    /* reaction on bullet impact */
+    float CurrentHitBlend = 0.f;
+    FTimerHandle BlendingTime;
+    FName CurrentBoneName = NAME_None;
+
+    void StartPhisicsReaction(AActor* DamagedActor, const FVector& ShotFromDirection, const FName& BoneName);
+    void UpdateSimulation();
+    void StopCurrentBoneSimulation();
+
 };

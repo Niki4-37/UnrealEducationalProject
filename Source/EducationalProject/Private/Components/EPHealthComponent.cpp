@@ -8,6 +8,7 @@ DEFINE_LOG_CATEGORY_STATIC(HealthComponent, All, All)
 #include "DamageFactors/EPFireDamageType.h"
 /* */
 #include "EPGameModeBase.h"
+#include "GameFramework/Character.h"
 
 UEPHealthComponent::UEPHealthComponent()
 {
@@ -20,6 +21,8 @@ void UEPHealthComponent::BeginPlay()
 	Super::BeginPlay();
     /* to prevent zero division in GetHealthPercent() */
     check(MaxHealth > 0);
+    
+    check(GetWorld());
     SetHaelth(MaxHealth);
     /* GetOwner() ActorComponent's class method gets pointer to Actor which belongs this component */
     AActor* ComponentOwner = GetOwner();
@@ -29,6 +32,8 @@ void UEPHealthComponent::BeginPlay()
         ComponentOwner->OnTakeAnyDamage.AddDynamic(this, &UEPHealthComponent::OnTakeAnyDamage);
 
         ComponentOwner->OnTakePointDamage.AddDynamic(this, &UEPHealthComponent::OnTakePointDamage);
+        /* bind to this delegate to use in spawning options */
+        ComponentOwner->OnDestroyed.AddDynamic(this, &UEPHealthComponent::OnDestroyed);
     }
     
 }
@@ -38,7 +43,7 @@ void UEPHealthComponent::SetHaelth(float NewHealth)
     Health = FMath::Clamp(NewHealth, 0.f, MaxHealth);
 }
 
-/* Create local function with equal params which difined in Actor's FTakeAnyDamageSignature OnTakeAnyDamage delegate*/
+/* Create local function with equal params which difined in Actor's class FTakeAnyDamageSignature OnTakeAnyDamage delegate*/
 void UEPHealthComponent::OnTakeAnyDamage(AActor* DamagedActor, float Damage, const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser)
 {
     if (Damage < 0.f || IsDead()) return;
@@ -53,11 +58,6 @@ void UEPHealthComponent::OnTakeAnyDamage(AActor* DamagedActor, float Damage, con
             UE_LOG(HealthComponent, Display, TEXT("Gain Fire Damage!"));
         }
     }
-
-    //if (IsDead())
-    //{
-    //    OnDeath.Broadcast(FVector::ZeroVector, FName("none"));
-    //}
 }
 
 void UEPHealthComponent::OnTakePointDamage (
@@ -74,12 +74,81 @@ void UEPHealthComponent::OnTakePointDamage (
     if (IsDead())
     {
         OnDeath.Broadcast(ShotFromDirection, BoneName);
-        
-        /* GameMode function GetAllBots() starts TimerManager with respawning function */
-        if (!GetWorld()) return;
-        const auto GameMode = GetWorld()->GetAuthGameMode<AEPGameModeBase>();
-        if (!GameMode) return;
-        GameMode->GetAllBots();
+    }
+    if (!IsDead() && BoneName != "pelvis")  //temporary plug
+    {
+        //StartPhisicsReaction(DamagedActor, ShotFromDirection, BoneName);
+        //const auto Character = Cast<ACharacter>(DamagedActor);
+       // Character->GetMesh()->SetSimulatePhysics(true);
+       // Character->GetMesh()->AddForce(ShotFromDirection, BoneName);
+    }
+    
+}
+
+void UEPHealthComponent::OnDestroyed(AActor* DestroyedActor)
+{
+    /* GameMode function StartSpawningProcess() starts TimerManager with respawning function */
+    if (!GetWorld()) return;
+    const auto GameMode = GetWorld()->GetAuthGameMode<AEPGameModeBase>();
+    if (!GameMode) return;
+    GameMode->StartSpawningProcess();
+}
+
+void UEPHealthComponent::StartPhisicsReaction(AActor* DamagedActor, const FVector& ShotFromDirection, const FName& BoneName)
+{
+    /* Cast<>() checks DamagedActor nullptr */
+    //const auto Character = Cast<ACharacter>(DamagedActor);
+    const auto Character = Cast<ACharacter>(GetOwner());
+    if (!Character || !Character->GetMesh()) return;
+
+    if (!CurrentBoneName.IsNone())
+    {
+        StopCurrentBoneSimulation();
+    }
+    CurrentHitBlend = 0.3f;
+    CurrentBoneName = BoneName;
+    
+    const float ImpulseForce = 1.f;    //make this option in weapon class
+
+    Character->GetMesh()->SetAllBodiesBelowSimulatePhysics(CurrentBoneName, true);
+    Character->GetMesh()->SetAllBodiesBelowPhysicsBlendWeight(CurrentBoneName, CurrentHitBlend);
+    Character->GetMesh()->AddImpulseToAllBodiesBelow(ShotFromDirection * ImpulseForce, CurrentBoneName, true);
+
+    const float TimerRate = 0.01f;
+    const bool bIsRepeat = true;
+    GetWorld()->GetTimerManager().ClearTimer(BlendingTime);
+    GetWorld()->GetTimerManager().SetTimer(BlendingTime, this, &UEPHealthComponent::UpdateSimulation, TimerRate, bIsRepeat);
+    
+}
+
+void UEPHealthComponent::UpdateSimulation()
+{
+    CurrentHitBlend -= 0.1f;
+
+    if (FMath::IsNearlyZero(CurrentHitBlend))
+    if (CurrentHitBlend <= 0.f)
+    {
+        GetWorld()->GetTimerManager().ClearTimer(BlendingTime);
+        StopCurrentBoneSimulation();
+    }
+    else
+    {
+        const auto Character = Cast<ACharacter>(GetOwner());
+        if (!Character || !Character->GetMesh()) return;
+
+        Character->GetMesh()->SetAllBodiesBelowPhysicsBlendWeight(CurrentBoneName, CurrentHitBlend);
     }
 }
+
+void UEPHealthComponent::StopCurrentBoneSimulation()
+{
+    CurrentBoneName = NAME_None;
+    const auto Character = Cast<ACharacter>(GetOwner());
+    if (!Character || !Character->GetMesh()) return;
+    
+    Character->GetMesh()->SetAllBodiesBelowSimulatePhysics(CurrentBoneName, false);
+    Character->GetMesh()->SetAllBodiesBelowPhysicsBlendWeight(CurrentBoneName, 0.f);
+    
+}
+
 

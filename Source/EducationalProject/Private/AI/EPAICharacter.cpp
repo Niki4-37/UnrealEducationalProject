@@ -4,6 +4,7 @@
 #include "AI/EPAICharacter.h"
 #include "AI/EPAIController.h"
 #include "Components/EPHealthComponent.h"
+#include "Components/CapsuleComponent.h"
 /* for GetCharacterMovement() */
 #include "GameFramework/CharacterMovementComponent.h"
 /* use BrainComponent's functions */
@@ -30,13 +31,15 @@ void AEPAICharacter::BeginPlay()
 	Super::BeginPlay();
 
     check (GetMesh());
+    check (GetCapsuleComponent());
     HealthComponent->OnDeath.AddUObject(this, &AEPAICharacter::OnDeath);
 }
 
 void AEPAICharacter::OnDeath(FVector ShotFromDirection, FName BoneName)
 {
     GetCharacterMovement()->DisableMovement();
-    /* Add phisics, makes Plyer ragdoll */
+    /* Add phisics, remove CapsuleComponent collision, makes Plyer ragdoll */
+    GetCapsuleComponent()->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
     GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
     GetMesh()->SetSimulatePhysics(true); 
     /* find base class controller */
@@ -47,10 +50,12 @@ void AEPAICharacter::OnDeath(FVector ShotFromDirection, FName BoneName)
         /* stop behavior tree */
         AIController->BrainComponent->Cleanup();
     }
-
-    GetMesh()->AddForce(ShotFromDirection * 500, BoneName);
+    
+    //GetMesh()->AddImpulse(ShotFromDirection, BoneName);
+    //GetMesh()->AddForce(ShotFromDirection * 100, BoneName);
     /* destroy actor after given time */
-    SetLifeSpan(5.f);   //destroy after death and make change with staticmesh
+    SetLifeSpan(5.f);   //destroy after death and make change with staticmesh???
+    //Destroy();
 }
 
 

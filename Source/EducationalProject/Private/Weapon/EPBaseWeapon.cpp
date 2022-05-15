@@ -109,24 +109,20 @@ void AEPBaseWeapon::MakeShot()
             Player, 
             nullptr //TSubclassOf<UDamageType> DamageTypeClass
         );
-        /* What inside UGameplayStatics::ApplyPointDamage =======>
+        /*====== What inside UGameplayStatics::ApplyPointDamage(...) =======>
         FVector HitFromDirection = TraceEnd;
         TSubclassOf<UDamageType> const ValidDamageTypeClass = DamageTypeClass ? DamageTypeClass : TSubclassOf<UDamageType>(UDamageType::StaticClass());
 		FPointDamageEvent PointDamageEvent(BaseDamage, HitResult, HitFromDirection, ValidDamageTypeClass);
 
         DamageActor->TakeDamage(BaseDamage, PointDamageEvent, EventInstigator, DamageCauser)
-        */
-
-        /* Old version ApplyAnyDamage 
-        DamageActor->TakeDamage(10.f, FDamageEvent(), Controller, this);
-        */
-        /*
-        const auto Character = Cast<ACharacter>(DamageActor);
+        ====================================================================*/
+        
+       /* const auto Character = Cast<ACharacter>(DamageActor);
         if (Character)
         {
             Character->GetMesh()->AddForce(WeaponMesh->GetSocketLocation(MuzzleSocketName) * BulletForce, HitResult.BoneName);
-        }
-        */
+        }*/
+        
 ////////////////////
     }
     else
