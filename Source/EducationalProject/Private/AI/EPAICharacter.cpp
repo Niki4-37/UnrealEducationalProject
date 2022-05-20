@@ -50,12 +50,8 @@ void AEPAICharacter::OnDeath(FVector ShotFromDirection, FName BoneName)
         /* stop behavior tree */
         AIController->BrainComponent->Cleanup();
     }
-    
-    //GetMesh()->AddImpulse(ShotFromDirection, BoneName);
-    //GetMesh()->AddForce(ShotFromDirection * 100, BoneName);
     /* destroy actor after given time */
     SetLifeSpan(5.f);   //destroy after death and make change with staticmesh???
-    //Destroy();
 }
 
 

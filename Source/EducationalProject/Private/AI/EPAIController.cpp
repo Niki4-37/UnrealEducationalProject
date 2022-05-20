@@ -1,12 +1,10 @@
 // For educational purposes only.
 
-
 #include "AI/EPAIController.h"
 #include "AI/EPAICharacter.h"
 #include "Components/EPAIPerceptionComponent.h"
 /* to get function GetBlackboardComponent() */
 #include "BehaviorTree/BlackboardComponent.h"
-
 
 AEPAIController::AEPAIController()
 {
@@ -30,19 +28,14 @@ void AEPAIController::OnPossess(APawn* InPawn)
 void AEPAIController::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
-    
-    /* first testing variant was :
-    const auto AimActor = EPAIPerceptionComponent->GetClosestEnemy();
-    next add new Service class and change logic
-    */
+
     const auto AimActor = FocusOnActor();
     SetFocus(AimActor);
 }
 
 AActor* AEPAIController::FocusOnActor()
 {
-    if (!GetBlackboardComponent())
-        return nullptr;
+    if (!GetBlackboardComponent()) return nullptr;
     /* Get pointer to Actor wich has added to blackboard with key "EnemyActor" */
     return Cast<AActor>(GetBlackboardComponent()->GetValueAsObject(FocusOnKeyName));
 }

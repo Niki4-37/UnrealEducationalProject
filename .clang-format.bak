@@ -1,0 +1,12 @@
+Language : Cpp
+BasedOnStyle : Microsoft
+AlignAfterOpenBracket : Align
+AlignOperands : Align
+BinPackParameters : false
+BreakBeforeBraces : Allman
+EmptyLineAfterAccessModifier : Never
+EmptyLineBeforeAccessModifier : Always
+PointerAlignment : Left
+ReferenceAlignment : Left 
+TabWidth : '4'
+UseTab : Never

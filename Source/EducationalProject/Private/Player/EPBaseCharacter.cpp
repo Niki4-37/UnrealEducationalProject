@@ -5,7 +5,7 @@
 #include "Components/EPCharacterMovementComponent.h"
 #include "Engine/Engine.h"
 
-/* Using this type of Constructor to change Default CharacterMovementComponent to Custom class*/
+/* Using this type of Constructor to change Default CharacterMovementComponent to Custom class */
 AEPBaseCharacter::AEPBaseCharacter(const FObjectInitializer& ObjInit)
     : Super(ObjInit.SetDefaultSubobjectClass<UEPCharacterMovementComponent>(ACharacter::CharacterMovementComponentName))
 {
@@ -34,7 +34,7 @@ void AEPBaseCharacter::BeginPlay()
 
     check(HealthComponent);
     check(GetMesh());
-    /* Get Delegate from Health Component and bind function. AddUObject binds only C++ delegate */
+    /* Get Delegate from Health Component and bind function. AddUObject binds only for C++ delegate */
     HealthComponent->OnDeath.AddUObject(this, &AEPBaseCharacter::OnDeath);
 }
 
@@ -59,7 +59,7 @@ void AEPBaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
     PlayerInputComponent->BindAction("Run", IE_Released, this, &AEPBaseCharacter::StopRunning);
     /* Shooting */
     PlayerInputComponent->BindAction("Fire", IE_Pressed, WeaponComponent, &UEPWeaponComponent::Fire);
-    /* Aiming */
+    /* Aiming to allow make shot */
     PlayerInputComponent->BindAction("Aiming", IE_Pressed, this, &AEPBaseCharacter::StartAiming);
     PlayerInputComponent->BindAction("Aiming", IE_Released, this, &AEPBaseCharacter::StopAiming);
 
@@ -107,7 +107,7 @@ void AEPBaseCharacter::StopRunning()
 void AEPBaseCharacter::OnDeath(FVector ShotFromDirection, FName BoneName)
 {
     GetCharacterMovement()->DisableMovement();
-    /* Add phisics, makes Plyer ragdoll*/
+    /* Add phisics, makes Player ragdoll */
     GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
     GetMesh()->SetSimulatePhysics(true);
 }

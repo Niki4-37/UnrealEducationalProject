@@ -12,16 +12,15 @@ DEFINE_LOG_CATEGORY_STATIC(HealthComponent, All, All)
 
 UEPHealthComponent::UEPHealthComponent()
 {
-	PrimaryComponentTick.bCanEverTick = false;
-
+    PrimaryComponentTick.bCanEverTick = false;
 }
 
 void UEPHealthComponent::BeginPlay()
 {
-	Super::BeginPlay();
+    Super::BeginPlay();
     /* to prevent zero division in GetHealthPercent() */
     check(MaxHealth > 0);
-    
+
     check(GetWorld());
     SetHaelth(MaxHealth);
     /* GetOwner() ActorComponent's class method gets pointer to Actor which belongs this component */
@@ -32,10 +31,9 @@ void UEPHealthComponent::BeginPlay()
         ComponentOwner->OnTakeAnyDamage.AddDynamic(this, &UEPHealthComponent::OnTakeAnyDamage);
 
         ComponentOwner->OnTakePointDamage.AddDynamic(this, &UEPHealthComponent::OnTakePointDamage);
-        /* bind to this delegate to use in spawning options */
+        /* Bind to this delegate to use in spawning options */
         ComponentOwner->OnDestroyed.AddDynamic(this, &UEPHealthComponent::OnDestroyed);
     }
-    
 }
 
 void UEPHealthComponent::SetHaelth(float NewHealth)
@@ -43,13 +41,18 @@ void UEPHealthComponent::SetHaelth(float NewHealth)
     Health = FMath::Clamp(NewHealth, 0.f, MaxHealth);
 }
 
-/* Create local function with equal params which difined in Actor's class FTakeAnyDamageSignature OnTakeAnyDamage delegate*/
-void UEPHealthComponent::OnTakeAnyDamage(AActor* DamagedActor, float Damage, const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser)
+/* Create local function with equal params which difined in Actor's class
+FTakeAnyDamageSignature OnTakeAnyDamage delegate */
+void UEPHealthComponent::OnTakeAnyDamage(AActor* DamagedActor,                 //
+                                         float Damage,                         //
+                                         const class UDamageType* DamageType,  //
+                                         class AController* InstigatedBy,      //
+                                         AActor* DamageCauser)                 //
 {
     if (Damage < 0.f || IsDead()) return;
-    
-    Health = FMath::Clamp( Health - Damage, 0.f, MaxHealth);
-    
+
+    Health = FMath::Clamp(Health - Damage, 0.f, MaxHealth);
+
     /* Check damage type */
     if (DamageType)
     {
@@ -60,29 +63,33 @@ void UEPHealthComponent::OnTakeAnyDamage(AActor* DamagedActor, float Damage, con
     }
 }
 
-void UEPHealthComponent::OnTakePointDamage (
-    AActor* DamagedActor,
-    float Damage, 
-    class AController* InstigatedBy,
-    FVector HitLocation,
-    class UPrimitiveComponent* FHitComponent,
-    FName BoneName, 
-    FVector ShotFromDirection,
-    const class UDamageType* DamageType, 
-    AActor* DamageCauser)
+void UEPHealthComponent::OnTakePointDamage(AActor* DamagedActor,                      //
+                                           float Damage,                              //
+                                           class AController* InstigatedBy,           //
+                                           FVector HitLocation,                       //
+                                           class UPrimitiveComponent* FHitComponent,  //
+                                           FName BoneName,                            //
+                                           FVector ShotFromDirection,                 //
+                                           const class UDamageType* DamageType,       //
+                                           AActor* DamageCauser)                      //
 {
     if (IsDead())
     {
         OnDeath.Broadcast(ShotFromDirection, BoneName);
-    }
-    if (!IsDead() && BoneName != "pelvis")  //temporary plug
-    {
-        //StartPhisicsReaction(DamagedActor, ShotFromDirection, BoneName);
-        //const auto Character = Cast<ACharacter>(DamagedActor);
-       // Character->GetMesh()->SetSimulatePhysics(true);
-       // Character->GetMesh()->AddForce(ShotFromDirection, BoneName);
-    }
     
+        const auto Character = Cast<ACharacter>(DamagedActor);
+        if (!Character || !Character->GetMesh()) return;
+        const auto Mass = Character->GetMesh()->GetMass();
+        if (FMath::IsNearlyZero(Mass)) return;
+        const FVector Force = (HitLocation - ShotFromDirection) * 500 / Mass;
+        
+        Character->GetMesh()->SetPhysicsLinearVelocity(Force, true, BoneName);
+    
+    }
+    if (!IsDead() && BoneName != "pelvis")  // temporary plug
+    {
+        // StartPhisicsReaction(DamagedActor, ShotFromDirection, BoneName);
+    }
 }
 
 void UEPHealthComponent::OnDestroyed(AActor* DestroyedActor)
@@ -97,7 +104,7 @@ void UEPHealthComponent::OnDestroyed(AActor* DestroyedActor)
 void UEPHealthComponent::StartPhisicsReaction(AActor* DamagedActor, const FVector& ShotFromDirection, const FName& BoneName)
 {
     /* Cast<>() checks DamagedActor nullptr */
-    //const auto Character = Cast<ACharacter>(DamagedActor);
+    // const auto Character = Cast<ACharacter>(DamagedActor);
     const auto Character = Cast<ACharacter>(GetOwner());
     if (!Character || !Character->GetMesh()) return;
 
@@ -107,8 +114,8 @@ void UEPHealthComponent::StartPhisicsReaction(AActor* DamagedActor, const FVecto
     }
     CurrentHitBlend = 0.3f;
     CurrentBoneName = BoneName;
-    
-    const float ImpulseForce = 1.f;    //make this option in weapon class
+
+    const float ImpulseForce = 1.f;  // make this option in weapon class
 
     Character->GetMesh()->SetAllBodiesBelowSimulatePhysics(CurrentBoneName, true);
     Character->GetMesh()->SetAllBodiesBelowPhysicsBlendWeight(CurrentBoneName, CurrentHitBlend);
@@ -118,7 +125,6 @@ void UEPHealthComponent::StartPhisicsReaction(AActor* DamagedActor, const FVecto
     const bool bIsRepeat = true;
     GetWorld()->GetTimerManager().ClearTimer(BlendingTime);
     GetWorld()->GetTimerManager().SetTimer(BlendingTime, this, &UEPHealthComponent::UpdateSimulation, TimerRate, bIsRepeat);
-    
 }
 
 void UEPHealthComponent::UpdateSimulation()
@@ -126,18 +132,18 @@ void UEPHealthComponent::UpdateSimulation()
     CurrentHitBlend -= 0.1f;
 
     if (FMath::IsNearlyZero(CurrentHitBlend))
-    if (CurrentHitBlend <= 0.f)
-    {
-        GetWorld()->GetTimerManager().ClearTimer(BlendingTime);
-        StopCurrentBoneSimulation();
-    }
-    else
-    {
-        const auto Character = Cast<ACharacter>(GetOwner());
-        if (!Character || !Character->GetMesh()) return;
+        if (CurrentHitBlend <= 0.f)
+        {
+            GetWorld()->GetTimerManager().ClearTimer(BlendingTime);
+            StopCurrentBoneSimulation();
+        }
+        else
+        {
+            const auto Character = Cast<ACharacter>(GetOwner());
+            if (!Character || !Character->GetMesh()) return;
 
-        Character->GetMesh()->SetAllBodiesBelowPhysicsBlendWeight(CurrentBoneName, CurrentHitBlend);
-    }
+            Character->GetMesh()->SetAllBodiesBelowPhysicsBlendWeight(CurrentBoneName, CurrentHitBlend);
+        }
 }
 
 void UEPHealthComponent::StopCurrentBoneSimulation()
@@ -145,10 +151,7 @@ void UEPHealthComponent::StopCurrentBoneSimulation()
     CurrentBoneName = NAME_None;
     const auto Character = Cast<ACharacter>(GetOwner());
     if (!Character || !Character->GetMesh()) return;
-    
+
     Character->GetMesh()->SetAllBodiesBelowSimulatePhysics(CurrentBoneName, false);
     Character->GetMesh()->SetAllBodiesBelowPhysicsBlendWeight(CurrentBoneName, 0.f);
-    
 }
-
-

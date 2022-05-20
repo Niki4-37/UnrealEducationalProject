@@ -1,6 +1,5 @@
 // For educational purposes only.
 
-
 #include "AI/EPSpawningActor.h"
 #include "AIController.h"
 #include "EPGameModeBase.h"
@@ -8,12 +7,12 @@
 
 AEPSpawningActor::AEPSpawningActor()
 {
-	PrimaryActorTick.bCanEverTick = false;
+    PrimaryActorTick.bCanEverTick = false;
 }
 
 void AEPSpawningActor::BeginPlay()
 {
-	Super::BeginPlay();
+    Super::BeginPlay();
 
     check(GetWorld());
 }

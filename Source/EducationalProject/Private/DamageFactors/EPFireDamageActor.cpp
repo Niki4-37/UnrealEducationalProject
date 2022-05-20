@@ -7,7 +7,7 @@
 
 AEPFireDamageActor::AEPFireDamageActor()
 {
-	PrimaryActorTick.bCanEverTick = true;
+    PrimaryActorTick.bCanEverTick = true;
 
     SceneComponent = CreateDefaultSubobject<USceneComponent>("FireDamage");
     SetRootComponent(SceneComponent);
@@ -15,24 +15,22 @@ AEPFireDamageActor::AEPFireDamageActor()
 
 void AEPFireDamageActor::BeginPlay()
 {
-	Super::BeginPlay();
+    Super::BeginPlay();
 }
 
 void AEPFireDamageActor::Tick(float DeltaTime)
 {
-	Super::Tick(DeltaTime);
+    Super::Tick(DeltaTime);
 
     DrawDebugSphere(GetWorld(), GetActorLocation(), SphereRadius, 24, SphereColor);
-    UGameplayStatics::ApplyRadialDamage(
-        GetWorld(),
-        Damage,
-        GetActorLocation(),
-        SphereRadius,
-        UEPFireDamageType::StaticClass(),   // Using child class to set fire damage type
-        {},
-        this,
-        nullptr,
-        bDoFoolDamage
-    );
-}
 
+    UGameplayStatics::ApplyRadialDamage(GetWorld(),                        //
+                                        Damage,                            //
+                                        GetActorLocation(),                //
+                                        SphereRadius,                      //
+                                        UEPFireDamageType::StaticClass(),  // Using child class to set fire damage type
+                                        {},                                //
+                                        this,                              //
+                                        nullptr,                           //
+                                        bDoFoolDamage);                    //
+}

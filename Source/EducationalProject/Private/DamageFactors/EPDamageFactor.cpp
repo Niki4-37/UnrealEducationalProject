@@ -1,6 +1,5 @@
 // For educational purposes only.
 
-
 #include "DamageFactors/EPDamageFactor.h"
 #include "DrawDebugHelpers.h"
 #include "Kismet/GameplayStatics.h"
@@ -8,7 +7,7 @@
 
 AEPDamageFactor::AEPDamageFactor()
 {
-	PrimaryActorTick.bCanEverTick = true;
+    PrimaryActorTick.bCanEverTick = true;
 
     DamageFactor = CreateDefaultSubobject<USceneComponent>("DamageFactor");
     SetRootComponent(DamageFactor);
@@ -16,28 +15,25 @@ AEPDamageFactor::AEPDamageFactor()
 
 void AEPDamageFactor::BeginPlay()
 {
-	Super::BeginPlay();
-	
+    Super::BeginPlay();
 }
 
 void AEPDamageFactor::Tick(float DeltaTime)
 {
-	Super::Tick(DeltaTime);
+    Super::Tick(DeltaTime);
 
     if (GetWorld())
     {
         DrawDebugSphere(GetWorld(), GetActorLocation(), DamageRadius, 24, DebugSphereColor);
-        UGameplayStatics::ApplyRadialDamage(
-            GetWorld(),
-            DealDamage,
-            GetActorLocation(),
-            DamageRadius,
-            DamageType,
-            {},
-            this,
-            nullptr,
-            bDoFullDamage
-        );
+        
+        UGameplayStatics::ApplyRadialDamage(GetWorld(),          //
+                                            DealDamage,          //
+                                            GetActorLocation(),  //
+                                            DamageRadius,        //
+                                            DamageType,          //
+                                            {},                  //
+                                            this,                //
+                                            nullptr,             //
+                                            bDoFullDamage);      //
     }
 }
-

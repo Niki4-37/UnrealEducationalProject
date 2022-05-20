@@ -1,6 +1,5 @@
 // For educational purposes only.
 
-
 #include "AI/Services/EPFindEnemyService.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Components/EPAIPerceptionComponent.h"
@@ -24,6 +23,6 @@ void UEPFindEnemyService::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* Nod
             Blackboard->SetValueAsObject(EnemyActorKey.SelectedKeyName, PerceptionComponent->GetClosestEnemy());
         }
     }
-        
+
     Super::TickNode(OwnerComp, NodeMemory, DeltaSeconds);
 }

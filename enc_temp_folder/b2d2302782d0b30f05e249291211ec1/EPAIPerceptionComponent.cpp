@@ -25,10 +25,7 @@ AActor* UEPAIPerceptionComponent::GetClosestEnemy() const
     {
         const auto PercievedPawn = Cast<APawn>(PercievedActor);
         const auto PawnController = PercievedPawn->GetController();
-        if (PawnController->IsA(ControllerType)) 
-        {
-            BestPawn = PercievedActor;
-        }
+        if (PawnController->IsA(ControllerType)) BestPawn = PercievedActor;
     }
 
     return BestPawn;

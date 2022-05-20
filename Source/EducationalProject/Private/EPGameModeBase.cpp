@@ -1,6 +1,5 @@
 // For educational purposes only.
 
-
 #include "EPGameModeBase.h"
 #include "Player/EPBaseCharacter.h"
 #include "Player/EPPlayerController.h"
@@ -50,11 +49,10 @@ void AEPGameModeBase::GetAllBots()
 void AEPGameModeBase::SpawnBot()
 {
     if (SpawningActorsList.Num() == 0) return;
-   
+
     const auto RandomSpawnerIndex = FMath::RandHelper(SpawningActorsList.Num() - 1);
     const auto RandomSpawningActor = Cast<AEPSpawningActor>(SpawningActorsList[RandomSpawnerIndex]);
     if (!RandomSpawningActor) return;
     RandomSpawningActor->SpawnBot();
     GetAllBots();
 }
-

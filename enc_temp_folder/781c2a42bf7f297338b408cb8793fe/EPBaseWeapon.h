@@ -54,7 +54,7 @@ protected:
     float WeaponDamage = 10.f;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Weapon")
-    float BulletSpread = 1.f;
+    float BulletSpread = 3.f;
 
 	virtual void BeginPlay() override;
 
