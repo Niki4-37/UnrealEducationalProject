@@ -51,8 +51,6 @@ void UEPHealthComponent::OnTakeAnyDamage(AActor* DamagedActor,                 /
 {
     if (Damage < 0.f || IsDead()) return;
 
-    Health = FMath::Clamp(Health - Damage, 0.f, MaxHealth);
-
     /* Check damage type */
     if (DamageType)
     {
@@ -73,18 +71,12 @@ void UEPHealthComponent::OnTakePointDamage(AActor* DamagedActor,                
                                            const class UDamageType* DamageType,       //
                                            AActor* DamageCauser)                      //
 {
+    SetHaelth(Health - Damage);
+
     if (IsDead())
     {
         OnDeath.Broadcast(ShotFromDirection, BoneName);
-    
-        const auto Character = Cast<ACharacter>(DamagedActor);
-        if (!Character || !Character->GetMesh()) return;
-        const auto Mass = Character->GetMesh()->GetMass();
-        if (FMath::IsNearlyZero(Mass)) return;
-        const FVector Force = (HitLocation - ShotFromDirection) * 500 / Mass;
-        
-        Character->GetMesh()->SetPhysicsLinearVelocity(Force, true, BoneName);
-    
+        UE_LOG(LogTemp, Display, TEXT("Character is Dead!"));
     }
     if (!IsDead() && BoneName != "pelvis")  // temporary plug
     {

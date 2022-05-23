@@ -103,7 +103,7 @@ void AEPBaseWeapon::MakeShot()
 
         const auto DamageActor = HitResult.GetActor();
         if (!DamageActor) return;
-        UE_LOG(LogTemp, Display, TEXT("ActorDamaged! %s"), *HitResult.BoneName.ToString());
+        //UE_LOG(LogTemp, Display, TEXT("ActorDamaged! %s"), *HitResult.BoneName.ToString());
 
         UGameplayStatics::ApplyPointDamage(DamageActor,   //
                                            WeaponDamage,  //

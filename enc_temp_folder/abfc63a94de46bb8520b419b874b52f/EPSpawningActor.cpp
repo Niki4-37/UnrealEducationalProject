@@ -27,7 +27,8 @@ void AEPSpawningActor::BeginPlay()
 
     ActorCollisionComponent->OnComponentBeginOverlap.AddDynamic(this, &AEPSpawningActor::OnActorCollisionComponentBeginOverlap);
     ActorCollisionComponent->OnComponentEndOverlap.AddDynamic(this, &AEPSpawningActor::OnActorCollisionComponentEndOverlap);
-
+    
+    bIsSpawnReady = true;
 }
 
 void AEPSpawningActor::OnActorCollisionComponentBeginOverlap(UPrimitiveComponent* OverlappedComponent,  //
@@ -37,7 +38,7 @@ void AEPSpawningActor::OnActorCollisionComponentBeginOverlap(UPrimitiveComponent
                                                              bool bFromSweep,                           //
                                                              const FHitResult& SweepResult)             //
 {
-    bIsSpawnOccupied = ActorCollisionComponent->IsOverlappingActor(OtherActor);
+    bIsSpawnReady = ActorCollisionComponent->IsOverlappingActor(OtherActor);
     UE_LOG(LogTemp, Display, TEXT("Actor: %s"), *GetDebugName(OtherActor));
 }
 
@@ -46,16 +47,15 @@ void AEPSpawningActor::OnActorCollisionComponentEndOverlap(UPrimitiveComponent* 
                                                            UPrimitiveComponent* OtherComp,            //
                                                            int32 OtherBodyIndex)                      //
 {
-    bIsSpawnOccupied = ActorCollisionComponent->IsOverlappingActor(OtherActor);
+    bIsSpawnReady = ActorCollisionComponent->IsOverlappingActor(OtherActor);
 }
 
 void AEPSpawningActor::SpawnBot()
 {
-    FString TextReady = bIsSpawnOccupied ? "true" : "false";
-    UE_LOG(LogTemp, Display, TEXT("Actor: %s, SpawnOccupied: %s"), *GetDebugName(this), *TextReady);
+    FString TextReady = bIsSpawnReady ? "true" : "false";
+    UE_LOG(LogTemp, Display, TEXT("Actor: %s, SpawnReady: %s"), *GetDebugName(this), *TextReady);
     
-    //if (!GetWorld() || bIsSpawnOccupied) return;
-    if (!GetWorld()) return;
+    if (!GetWorld() || !bIsSpawnReady) return;
 
     FActorSpawnParameters SpawnParams;
     SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
