@@ -57,8 +57,7 @@ bool AEPBaseWeapon::GetTraceData(FVector& TraceStart, FVector& TraceEnd) const
     if (!GetPlayerVeiwpoint(VeiwLocation, VeiwRotation)) return false;
 
     TraceStart = VeiwLocation;
-    const auto HalfAngleSpreadRad = FMath::DegreesToRadians(BulletSpread);
-    const FVector ShotDirection = FMath::VRandCone(VeiwRotation.Vector(), HalfAngleSpreadRad); 
+    const FVector ShotDirection = VeiwRotation.Vector(); 
     TraceEnd = VeiwLocation + ShotDirection * BulletFlyMaxDistace;
 
     return true;
@@ -66,64 +65,12 @@ bool AEPBaseWeapon::GetTraceData(FVector& TraceStart, FVector& TraceEnd) const
 
 void AEPBaseWeapon::MakeShot()
 {
-    const auto Player = Cast<ACharacter>(GetOwner());
-    if (!GetWorld() || !Player || IsAmmoEmpty()) return;
-    const auto Controller = GetPlayerController();
-    if (!Controller) return;
+    
+}
 
-    FVector TraceStart, TraceEnd;
-    if (!GetTraceData(TraceStart, TraceEnd)) return;
-
-    FCollisionQueryParams CollisionParams;
-
-    FHitResult HitResult;
-
-    GetWorld()->LineTraceSingleByChannel(HitResult,                          //
-                                         TraceStart,                         //
-                                         TraceEnd,                           //
-                                         ECollisionChannel::ECC_Visibility,  //
-                                         CollisionParams);                   //
-
-    if (HitResult.bBlockingHit)
-    {
-        DrawDebugLine(GetWorld(),                                       //
-                      WeaponMesh->GetSocketLocation(MuzzleSocketName),  //
-                      HitResult.ImpactPoint,                            //
-                      FColor::Cyan,                                     //
-                      false,                                            //
-                      5.f);                                             //
-
-        DrawDebugSphere(GetWorld(),             //
-                        HitResult.ImpactPoint,  //
-                        5.f,                    //
-                        24,                     //
-                        FColor::Blue,           //
-                        false,                  //
-                        5.f);                   //
-
-        const auto DamageActor = HitResult.GetActor();
-        if (!DamageActor) return;
-        //UE_LOG(LogTemp, Display, TEXT("ActorDamaged! %s"), *HitResult.BoneName.ToString());
-
-        UGameplayStatics::ApplyPointDamage(DamageActor,   //
-                                           WeaponDamage,  //
-                                           Player->GetActorLocation(),  //
-                                           HitResult,     //
-                                           Controller,    //
-                                           Player,        //
-                                           nullptr);      // TSubclassOf<UDamageType> DamageTypeClass
-    }
-    else
-    {
-        DrawDebugLine(GetWorld(),                                       //
-                      WeaponMesh->GetSocketLocation(MuzzleSocketName),  //
-                      TraceEnd,                                         //
-                      FColor::Purple,                                   //
-                      false,                                            //
-                      5.f);                                             //
-    }
-
-    DecreaseAmmo();
+bool AEPBaseWeapon::IsAmmoEmpty() const
+{
+    return IsClipEmpty() && CurrentAmmo.Clips == 0;
 }
 
 void AEPBaseWeapon::DecreaseAmmo()
@@ -138,11 +85,6 @@ void AEPBaseWeapon::DecreaseAmmo()
 bool AEPBaseWeapon::IsClipEmpty() const
 {
     return CurrentAmmo.Bullets == 0;
-}
-
-bool AEPBaseWeapon::IsAmmoEmpty() const
-{
-    return IsClipEmpty() && CurrentAmmo.Clips == 0;
 }
 
 void AEPBaseWeapon::ChangeClip()

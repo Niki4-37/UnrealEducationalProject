@@ -62,7 +62,8 @@ void AEPBaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
     /* Aiming to allow make shot */
     PlayerInputComponent->BindAction("Aiming", IE_Pressed, this, &AEPBaseCharacter::StartAiming);
     PlayerInputComponent->BindAction("Aiming", IE_Released, this, &AEPBaseCharacter::StopAiming);
-
+    /* Change weapon */
+    PlayerInputComponent->BindAction("ChangeWeapon", IE_Pressed, WeaponComponent, &UEPWeaponComponent::NextWeapon);
 }
 /* Use this function in animation blueprint to set direction in statemachine */
 float AEPBaseCharacter::GetMovementDirection() const

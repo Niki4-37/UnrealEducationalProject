@@ -52,7 +52,7 @@ void AEPGameModeBase::SpawnBot()
     
     const auto RandomSpawnerIndex = FMath::RandHelper(SpawningActorsList.Num() - 1);
     const auto RandomSpawningActor = Cast<AEPSpawningActor>(SpawningActorsList[RandomSpawnerIndex]);
-    if (RandomSpawningActor && !RandomSpawningActor->IsSpawnOccupied())
+    if (RandomSpawningActor && RandomSpawningActor->CanSpawn())
     {
         RandomSpawningActor->SpawnBot();
     }
@@ -61,7 +61,7 @@ void AEPGameModeBase::SpawnBot()
         for (const auto Actor : SpawningActorsList)
         {
             const auto SpawningActor = Cast<AEPSpawningActor>(Actor);
-            if (!SpawningActor || SpawningActor->IsSpawnOccupied()) continue;
+            if (!SpawningActor || !SpawningActor->CanSpawn()) continue;  // add timer pause if all spawnactors are occupied
             SpawningActor->SpawnBot();
             break;
         }

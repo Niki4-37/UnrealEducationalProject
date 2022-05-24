@@ -4,22 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-
+#include "EPCoreData.h"
 #include "EPBaseWeapon.generated.h"
 
 class USkeletalMeshComponent;
-
-USTRUCT(BlueprintType)
-struct FAmmoData
-{
-    GENERATED_USTRUCT_BODY()
-
-    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Weapon", meta = (ClampMin = "1", ClampMax = "45"))
-        int32 Bullets;
-
-    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Weapon", meta = (ClampMin = "1", ClampMax = "10"))
-        int32 Clips;
-};
 
 UCLASS()
 class EDUCATIONALPROJECT_API AEPBaseWeapon : public AActor
@@ -32,6 +20,9 @@ public:
     virtual void Fire();
     /* Gives info about ammo in widget use in WeaponComponent */
     FAmmoData GetCurrentAmmo() const { return CurrentAmmo; };
+    
+    UFUNCTION(BlueprintCallable)
+    EWeaponType GetWeaponType() const { return WeaponType; };
 
 protected:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components")
@@ -56,19 +47,23 @@ protected:
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Weapon")
     float BulletSpread = 1.f;
 
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Weapon")
+    EWeaponType WeaponType = EWeaponType::None;
+
 	virtual void BeginPlay() override;
 
     APlayerController* GetPlayerController() const;
     bool GetPlayerVeiwpoint(FVector& VeiwLocation, FRotator& VeiwRotation) const;
-    bool GetTraceData(FVector& TraceStart, FVector& TraceEnd) const;
+    virtual bool GetTraceData(FVector& TraceStart, FVector& TraceEnd) const;
 
-    void MakeShot();
+    virtual void MakeShot();
+
+    bool IsAmmoEmpty() const;
+    void DecreaseAmmo();
 
 private:
     FAmmoData CurrentAmmo;
 
-    void DecreaseAmmo();
     bool IsClipEmpty() const;
-    bool IsAmmoEmpty() const;
     void ChangeClip();
 };

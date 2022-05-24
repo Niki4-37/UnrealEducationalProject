@@ -19,7 +19,7 @@ public:
 
     void SpawnBot();
 
-    bool IsSpawnOccupied() const { return bIsSpawnOccupied; };
+    bool CanSpawn() const { return !bIsSpawnOccupied; };
 
 protected:
 	virtual void BeginPlay() override;
