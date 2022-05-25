@@ -1,6 +1,5 @@
 // For educational purposes only.
 
-
 #include "Weapon/EPPistol.h"
 #include "GameFramework/Character.h"
 #include "DrawDebugHelpers.h"
@@ -20,7 +19,7 @@ bool AEPPistol::GetTraceData(FVector& TraceStart, FVector& TraceEnd) const
     return true;
 }
 
-void AEPPistol::MakeShot() 
+void AEPPistol::MakeShot()
 {
     const auto Player = Cast<ACharacter>(GetOwner());
     if (!GetWorld() || !Player || IsAmmoEmpty()) return;
@@ -30,24 +29,17 @@ void AEPPistol::MakeShot()
     FVector TraceStart, TraceEnd;
     if (!GetTraceData(TraceStart, TraceEnd)) return;
 
-    FCollisionQueryParams CollisionParams;
-
     FHitResult HitResult;
-
-    GetWorld()->LineTraceSingleByChannel(HitResult,                          //
-                                         TraceStart,                         //
-                                         TraceEnd,                           //
-                                         ECollisionChannel::ECC_Visibility,  //
-                                         CollisionParams);                   //
+    MakeHit(HitResult, TraceStart, TraceEnd);
 
     if (HitResult.bBlockingHit)
     {
-        DrawDebugLine(GetWorld(),                                       //
-                      WeaponMesh->GetSocketLocation(MuzzleSocketName),  //
-                      HitResult.ImpactPoint,                            //
-                      FColor::Cyan,                                     //
-                      false,                                            //
-                      5.f);                                             //
+        DrawDebugLine(GetWorld(),                //
+                      GetMuzzleWorldLocation(),  //
+                      HitResult.ImpactPoint,     //
+                      FColor::Cyan,              //
+                      false,                     //
+                      5.f);                      //
 
         DrawDebugSphere(GetWorld(),             //
                         HitResult.ImpactPoint,  //
@@ -61,22 +53,22 @@ void AEPPistol::MakeShot()
         if (!DamageActor) return;
         // UE_LOG(LogTemp, Display, TEXT("ActorDamaged! %s"), *HitResult.BoneName.ToString());
 
-        UGameplayStatics::ApplyPointDamage(DamageActor,                 //
-                                           WeaponDamage,                //
-                                           Player->GetActorLocation(),  //
-                                           HitResult,                   //
-                                           Controller,                  //
-                                           Player,                      //
-                                           nullptr);                    // TSubclassOf<UDamageType> DamageTypeClass
+        UGameplayStatics::ApplyPointDamage(DamageActor,   //
+                                           WeaponDamage,  //
+                                           TraceStart,    //
+                                           HitResult,     //
+                                           Controller,    //
+                                           Player,        //
+                                           nullptr);      // TSubclassOf<UDamageType> DamageTypeClass
     }
     else
     {
-        DrawDebugLine(GetWorld(),                                       //
-                      WeaponMesh->GetSocketLocation(MuzzleSocketName),  //
-                      TraceEnd,                                         //
-                      FColor::Purple,                                   //
-                      false,                                            //
-                      5.f);                                             //
+        DrawDebugLine(GetWorld(),                //
+                      GetMuzzleWorldLocation(),  //
+                      TraceEnd,                  //
+                      FColor::Purple,            //
+                      false,                     //
+                      5.f);                      //
     }
 
     DecreaseAmmo();

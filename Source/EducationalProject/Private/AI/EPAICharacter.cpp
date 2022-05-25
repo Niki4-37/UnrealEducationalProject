@@ -45,7 +45,7 @@ void AEPAICharacter::OnDeath(FVector ShotFromDirection, FName BoneName)
 
     const auto Mass = GetMesh()->GetBoneMass(BoneName);
     //UE_LOG(LogTemp, Display, TEXT("Mass: %f"), Mass);
-    const FVector Force = FMath::IsNearlyZero(Mass) ? FVector::ZeroVector : ((GetActorLocation() - ShotFromDirection) * 10 / Mass);
+    const FVector Force = FMath::IsNearlyZero(Mass) ? FVector::ZeroVector : ((GetActorLocation() - ShotFromDirection).GetSafeNormal() * 5000 / Mass);
     //UE_LOG(LogTemp, Display, TEXT("Force: %s"), *Force.ToString());
     GetMesh()->SetPhysicsLinearVelocity(Force, true, BoneName);
  

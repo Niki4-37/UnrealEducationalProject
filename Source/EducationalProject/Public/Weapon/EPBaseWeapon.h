@@ -21,7 +21,7 @@ public:
     /* Gives info about ammo in widget use in WeaponComponent */
     FAmmoData GetCurrentAmmo() const { return CurrentAmmo; };
     
-    UFUNCTION(BlueprintCallable)
+    UFUNCTION(BlueprintCallable, Category = "Animation")
     EWeaponType GetWeaponType() const { return WeaponType; };
 
 protected:
@@ -55,8 +55,11 @@ protected:
     APlayerController* GetPlayerController() const;
     bool GetPlayerVeiwpoint(FVector& VeiwLocation, FRotator& VeiwRotation) const;
     virtual bool GetTraceData(FVector& TraceStart, FVector& TraceEnd) const;
+    FVector GetMuzzleWorldLocation() const;
 
     virtual void MakeShot();
+    
+    void MakeHit(FHitResult& HitResult, FVector& TraceStart, FVector& TraceEnd);
 
     bool IsAmmoEmpty() const;
     void DecreaseAmmo();

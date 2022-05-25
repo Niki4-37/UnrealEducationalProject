@@ -28,6 +28,7 @@ void AEPBaseWeapon::BeginPlay()
     Super::BeginPlay();
 
     check(WeaponMesh);
+    check(GetWorld());
 
     CurrentAmmo = DefaultAmmo;
 }
@@ -63,9 +64,29 @@ bool AEPBaseWeapon::GetTraceData(FVector& TraceStart, FVector& TraceEnd) const
     return true;
 }
 
+FVector AEPBaseWeapon::GetMuzzleWorldLocation() const
+{
+    return WeaponMesh->GetSocketLocation(MuzzleSocketName);
+}
+
 void AEPBaseWeapon::MakeShot()
 {
     
+}
+
+
+void AEPBaseWeapon::MakeHit(FHitResult& HitResult, FVector& TraceStart, FVector& TraceEnd)
+{
+    //if (!GetWorld()) return;
+    
+    FCollisionQueryParams CollisionParams;
+    CollisionParams.AddIgnoredActor(GetOwner());
+
+    GetWorld()->LineTraceSingleByChannel(HitResult,                          //
+                                         TraceStart,                         //
+                                         TraceEnd,                           //
+                                         ECollisionChannel::ECC_Visibility,  //
+                                         CollisionParams);                   //
 }
 
 bool AEPBaseWeapon::IsAmmoEmpty() const
