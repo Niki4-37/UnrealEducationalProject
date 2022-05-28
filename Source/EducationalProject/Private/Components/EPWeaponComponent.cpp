@@ -1,7 +1,12 @@
 // For educational purposes only.
 
 #include "Components/EPWeaponComponent.h"
+#include "GameFramework/Character.h"
 #include "Player/EPBaseCharacter.h"
+
+#include "Weapon/EPBaseWeapon.h"
+#include "Animation/EPIntoTheHolsterAnimNotify.h"
+#include "Animation/EPFromTheHolsterAnimNotify.h"
 
 UEPWeaponComponent::UEPWeaponComponent()
 {
@@ -29,28 +34,38 @@ bool UEPWeaponComponent::GetAmmoData(FAmmoData& Data) const
     return false;
 }
 
-void UEPWeaponComponent::NextWeapon() 
+void UEPWeaponComponent::NextWeapon()
 {
-    CurrentWeaponIndex = (CurrentWeaponIndex + 1) % OwningWeapons.Num();
-    EquipWeapon(CurrentWeaponIndex);
+    /* find equip animation for current weapon */
+    if (CurrentWeapon)
+    {
+        const auto CurrentWeaponAnimData = WeaponAnimData.FindByPredicate([&](const FWaeponAnimData& Data)
+            { return Data.WeaponClass == CurrentWeapon->GetClass(); });
+        CurrentEquipAnimation = CurrentWeaponAnimData ? CurrentWeaponAnimData->EquipAnimation : nullptr;
+
+        /* CurrentEquipAnimation pointer checks inside PlayAnimMontage(). 
+        There is IntoTheHolsterAnimNotify in EquipAnimation, */
+        PlayAnimation(CurrentEquipAnimation);
+    }
 }
 
 void UEPWeaponComponent::BeginPlay()
 {
     Super::BeginPlay();
 
+    InitAnimation();
     CurrentWeaponIndex = 0;
     SpawnWeapon();
     EquipWeapon(CurrentWeaponIndex);
 }
 
-void UEPWeaponComponent::EndPlay(const EEndPlayReason::Type EndPlayReason) 
+void UEPWeaponComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
     CurrentWeapon = nullptr;
     for (auto Weapon : OwningWeapons)
     {
         Weapon->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
-        Weapon->Destroy(); // there is no reason to stay lying weapon
+        Weapon->Destroy();  // there is no reason to stay lying weapon
     }
 
     OwningWeapons.Empty();
@@ -58,21 +73,76 @@ void UEPWeaponComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
     Super::EndPlay(EndPlayReason);
 }
 
+void UEPWeaponComponent::InitAnimation()
+{
+    for (auto& OneWeaponAnim : WeaponAnimData)
+    {
+        auto IntoTheHolsterAnimNotify = FindNotifyByClass<UEPIntoTheHolsterAnimNotify>(OneWeaponAnim.EquipAnimation);
+        if (!IntoTheHolsterAnimNotify) continue;
+        IntoTheHolsterAnimNotify->OnNotified.AddUObject(this, &UEPWeaponComponent::IntoTheHolster);
+    }
+    
+    for (auto& OneWeaponAnim : WeaponAnimData)
+    {
+        auto FromTheHolsterAnimNotify = FindNotifyByClass<UEPFromTheHolsterAnimNotify>(OneWeaponAnim.EquipAnimation);
+        if (!FromTheHolsterAnimNotify) continue;
+        FromTheHolsterAnimNotify->OnNotified.AddUObject(this, &UEPWeaponComponent::FromTheHolster);
+    }
+}
+
+void UEPWeaponComponent::PlayAnimation(UAnimMontage* Animation)
+{
+    const auto Character = Cast<ACharacter>(GetOwner());
+    if (!Character) return;
+
+    Character->PlayAnimMontage(Animation);
+}
+
+/* place weapon to ArmorySocket when notify riched */
+void UEPWeaponComponent::IntoTheHolster(USkeletalMeshComponent* MeshComponent)
+{
+    ACharacter* Character = Cast<ACharacter>(GetOwner());
+    if (!Character || MeshComponent != Character->GetMesh()) return;
+
+    if (CurrentWeapon)
+    {
+        ///////////////////////////////////////////////////////////////////////////////////
+        WeaponArmorySocketName = CurrentWeapon->GetWeaponType() == EWeaponType::OneHand  //
+                                     ? "PistolSocket"                                    //
+                                     : "ArmorySocket";                                   //
+
+        AttachWeaponToSocket(CurrentWeapon, MeshComponent, WeaponArmorySocketName);
+    }
+}
+
+/* binded to FromTheHolsterAnimNotify, makes weapon change */
+void UEPWeaponComponent::FromTheHolster(USkeletalMeshComponent* MeshComponent)
+{
+    ACharacter* Character = Cast<ACharacter>(GetOwner());
+    if (!Character || MeshComponent != Character->GetMesh()) return;
+
+    CurrentWeaponIndex = (CurrentWeaponIndex + 1) % OwningWeapons.Num();
+    EquipWeapon(CurrentWeaponIndex);
+}
+
 void UEPWeaponComponent::SpawnWeapon()
 {
     ACharacter* Player = Cast<ACharacter>(GetOwner());
     if (!GetWorld() || !Player || !Player->GetMesh()) return;
 
-    for (auto OneWeaponAnim : WeaponAnimData)
+    for (const auto& OneWeaponAnim : WeaponAnimData)
     {
         auto Weapon = GetWorld()->SpawnActor<AEPBaseWeapon>(OneWeaponAnim.WeaponClass);
         if (!Weapon) continue;
 
         Weapon->SetOwner(Player);
         OwningWeapons.Add(Weapon);
-    
-        AttachWeaponToSocket(Weapon, Player->GetMesh(), WeaponArmorySocketName);
+        ////////////////////////////////////////////////////////////////////////////
+        WeaponArmorySocketName = Weapon->GetWeaponType() == EWeaponType::OneHand  //
+                                     ? "PistolSocket"                             //
+                                     : "ArmorySocket";                            //
 
+        AttachWeaponToSocket(Weapon, Player->GetMesh(), WeaponArmorySocketName);
     }
 }
 
@@ -86,29 +156,18 @@ void UEPWeaponComponent::AttachWeaponToSocket(AEPBaseWeapon* Weapon,            
     Weapon->AttachToComponent(SceneComponent, AttachmentRules, SocketName);
 }
 
-void UEPWeaponComponent::EquipWeapon(int32 WeaponIndex) 
+void UEPWeaponComponent::EquipWeapon(int32 WeaponIndex)
 {
-    if (WeaponIndex < 0 || WeaponIndex > OwningWeapons.Num())
-    {
-        return;
-    }
-    
+    if (WeaponIndex < 0 || WeaponIndex > OwningWeapons.Num()) return;
+
     const auto Player = Cast<ACharacter>(GetOwner());
     if (!Player || !Player->GetMesh()) return;
-    
-    if (CurrentWeapon)
-    {
-        AttachWeaponToSocket(CurrentWeapon, Player->GetMesh(), WeaponArmorySocketName);
-    }
 
     CurrentWeapon = OwningWeapons[WeaponIndex];
-    
-    /*
-    const auto CurrentWeaponAnimData = WeaponAnimData.FindByPredicate([&](const FWaeponAnimData& Data) { 
-        return Data.WeaponClass == CurrentWeapon->GetClass();});
 
-    CurrentAnimationSequences = CurrentWeaponAnimData->AnimSequences; ///////////
-    */    
+    /*const auto CurrentWeaponAnimData = WeaponAnimData.FindByPredicate([&](const FWaeponAnimData& Data)
+        { return Data.WeaponClass == CurrentWeapon->GetClass(); });
+    CurrentEquipAnimation = CurrentWeaponAnimData ? CurrentWeaponAnimData->EquipAnimation : nullptr;*/
 
     AttachWeaponToSocket(CurrentWeapon, Player->GetMesh(), WeaponArmedSocketName);
- }
+}

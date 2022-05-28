@@ -4,11 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "Weapon/EPBaseWeapon.h"
+#include "EPCoreData.h"
 
 #include "EPWeaponComponent.generated.h"
 
 class AEPBaseWeapon;
+class UAnimMontage;
+class USkeletalMeshComponent;
 
 USTRUCT(BlueprintType)
 struct FWaeponAnimData
@@ -18,7 +20,9 @@ struct FWaeponAnimData
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Animation")
     TSubclassOf<AEPBaseWeapon> WeaponClass;
 
-    //UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation")
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation")
+    UAnimMontage* EquipAnimation;
+
     //TArray<UAnimSequence*> AnimSequences;
 };
 
@@ -49,23 +53,53 @@ protected:
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
     FName WeaponArmorySocketName = "ArmorySocket";
-    
+
     virtual void BeginPlay() override;
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 private:
-    //UPROPERTY()
-    //TArray<UAnimSequence*> CurrentAnimationSequences;
-
     UPROPERTY()
     TArray<AEPBaseWeapon*> OwningWeapons;
 
     UPROPERTY()
     AEPBaseWeapon* CurrentWeapon = nullptr;
 
+    UPROPERTY()
+    UAnimMontage* CurrentEquipAnimation = nullptr;
+
     int32 CurrentWeaponIndex;
+
+    bool bCanSwitch = false;
     
+    /*template <typename Y>
+    void BindFuncToNotifyEvent(?????, UAnimMontage* Animation)
+    {
+        if (!Animation) return;
+        auto AnimNotify = FindNotifyByClass<Y>(Animation);
+        if (!AnimNotify) return;
+        AnimNotify->OnNotified.AddUObject(this, ?????);
+    }*/
+
+    void InitAnimation();
+    void PlayAnimation(UAnimMontage* Animation);
+    void IntoTheHolster(USkeletalMeshComponent* MeshComponent);
+    void FromTheHolster(USkeletalMeshComponent* MeshComponent);
+
     void SpawnWeapon();
     void AttachWeaponToSocket(AEPBaseWeapon* Weapon, USceneComponent* SceneComponent, const FName& SocketName);
     void EquipWeapon(int32 WeaponIndex);
+
+    template <typename Y>
+    Y* FindNotifyByClass(UAnimSequenceBase* Animation)
+    {
+        if (!Animation) return nullptr;
+        
+        const TArray<FAnimNotifyEvent> Notifies = Animation->Notifies;
+        for (auto& NotifyEvent : Notifies)
+        {
+            auto RequiredNotify = Cast<Y>(NotifyEvent.Notify);
+            if (RequiredNotify) return RequiredNotify;
+        }
+        return nullptr;
+    }
 };
