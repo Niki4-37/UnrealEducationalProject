@@ -4,11 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "Animation/EPAnimNotify.h"
-#include "EPStartEqipNotify.generated.h"
+#include "EPEquipFinishedAnimNotify.generated.h"
 
 UCLASS()
-class EDUCATIONALPROJECT_API UEPStartEqipNotify : public UEPAnimNotify
+class EDUCATIONALPROJECT_API UEPEquipFinishedAnimNotify : public UEPAnimNotify
 {
 	GENERATED_BODY()
-
+	
 };

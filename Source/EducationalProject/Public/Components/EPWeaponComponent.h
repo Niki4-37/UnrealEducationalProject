@@ -23,6 +23,9 @@ struct FWaeponAnimData
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation")
     UAnimMontage* EquipAnimation;
 
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation")
+    UAnimMontage* ReloadAnimation;
+
     //TArray<UAnimSequence*> AnimSequences;
 };
 
@@ -42,6 +45,8 @@ public:
     AEPBaseWeapon* GetCurrentWeapon() const { return CurrentWeapon; };
 
     void NextWeapon();
+
+    void Reload();
 
 protected:
     /* New array with weapons */
@@ -67,27 +72,36 @@ private:
     UPROPERTY()
     UAnimMontage* CurrentEquipAnimation = nullptr;
 
+    UPROPERTY()
+    UAnimMontage* CurrentReloadAnimation = nullptr;    
+
     int32 CurrentWeaponIndex;
 
-    bool bCanSwitch = false;
+    bool bEquipAnimInProgress = false;
+    bool bReloadAnimInProgress = false;
     
-    /*template <typename Y>
-    void BindFuncToNotifyEvent(?????, UAnimMontage* Animation)
+    /*template <typename RequiredClass, typename UserClass>
+    void BindFuncToNotifyEvent(UAnimMontage* Animation, UserClass* InUserObject, ????)
     {
-        if (!Animation) return;
-        auto AnimNotify = FindNotifyByClass<Y>(Animation);
+        if (!Animation || !InUserObject) return;
+        auto AnimNotify = FindNotifyByClass<RequiredClass>(Animation);
         if (!AnimNotify) return;
-        AnimNotify->OnNotified.AddUObject(this, ?????);
+        AnimNotify->OnNotified.AddUObject(InUserObject, ????);
     }*/
 
     void InitAnimation();
     void PlayAnimation(UAnimMontage* Animation);
     void IntoTheHolster(USkeletalMeshComponent* MeshComponent);
     void FromTheHolster(USkeletalMeshComponent* MeshComponent);
+    void OnEquipFinished(USkeletalMeshComponent* MeshComponent);
+    void OnReloadFinished(USkeletalMeshComponent* MeshComponent);
 
     void SpawnWeapon();
     void AttachWeaponToSocket(AEPBaseWeapon* Weapon, USceneComponent* SceneComponent, const FName& SocketName);
     void EquipWeapon(int32 WeaponIndex);
+
+    bool CanEquip();
+    bool CanReload();
 
     template <typename Y>
     Y* FindNotifyByClass(UAnimSequenceBase* Animation)

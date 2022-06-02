@@ -51,6 +51,8 @@ void UEPHealthComponent::OnTakeAnyDamage(AActor* DamagedActor,                 /
 {
     if (Damage < 0.f || IsDead()) return;
 
+    ApplyDamage(Damage);
+    
     /* Check damage type */
     if (DamageType)
     {
@@ -71,12 +73,15 @@ void UEPHealthComponent::OnTakePointDamage(AActor* DamagedActor,                
                                            const class UDamageType* DamageType,       //
                                            AActor* DamageCauser)                      //
 {
-    SetHaelth(Health - Damage);
+    ApplyDamage(Damage);
 
     if (IsDead())
     {
-        OnDeath.Broadcast(ShotFromDirection, BoneName);
-        UE_LOG(LogTemp, Display, TEXT("Character is Dead!"));
+        const auto Character = Cast<ACharacter>(DamagedActor);
+        if (!Character) return; 
+        const auto Mass = Character->GetMesh()->GetBoneMass(BoneName);
+        const FVector Force = FMath::IsNearlyZero(Mass) ? FVector::ZeroVector : ((HitLocation - ShotFromDirection).GetSafeNormal() * 5000.f / Mass);
+        Character->GetMesh()->SetPhysicsLinearVelocity(Force, true, BoneName);
     }
     if (!IsDead() && BoneName != "pelvis")  // temporary plug
     {
@@ -91,6 +96,17 @@ void UEPHealthComponent::OnDestroyed(AActor* DestroyedActor)
     const auto GameMode = GetWorld()->GetAuthGameMode<AEPGameModeBase>();
     if (!GameMode) return;
     GameMode->StartSpawningProcess();
+}
+
+void UEPHealthComponent::ApplyDamage(float Damage) 
+{
+    SetHaelth(Health - Damage);
+
+    if (IsDead())
+    {
+        OnDeath.Broadcast();
+        UE_LOG(LogTemp, Display, TEXT("Character is Dead!"));
+    }
 }
 
 void UEPHealthComponent::StartPhisicsReaction(AActor* DamagedActor, const FVector& ShotFromDirection, const FName& BoneName)

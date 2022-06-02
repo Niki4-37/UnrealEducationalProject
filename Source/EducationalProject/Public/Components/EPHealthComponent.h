@@ -6,7 +6,8 @@
 #include "Components/ActorComponent.h"
 #include "EPHealthComponent.generated.h"
 
-DECLARE_MULTICAST_DELEGATE_TwoParams(FOnDeathSignature, FVector, FName);
+//DECLARE_MULTICAST_DELEGATE_TwoParams(FOnDeathSignature, FVector, FName);
+DECLARE_MULTICAST_DELEGATE(FOnDeathSignature);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class EDUCATIONALPROJECT_API UEPHealthComponent : public UActorComponent
@@ -44,6 +45,8 @@ private:
 
     UFUNCTION()
     void OnDestroyed(AActor* DestroyedActor);
+
+    void ApplyDamage(float Damage);
 
     /* reaction on bullet impact */
     float CurrentHitBlend = 0.f;

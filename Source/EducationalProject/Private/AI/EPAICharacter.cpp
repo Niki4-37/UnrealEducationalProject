@@ -35,19 +35,13 @@ void AEPAICharacter::BeginPlay()
     HealthComponent->OnDeath.AddUObject(this, &AEPAICharacter::OnDeath);
 }
 
-void AEPAICharacter::OnDeath(FVector ShotFromDirection, FName BoneName)
+void AEPAICharacter::OnDeath()
 {
     GetCharacterMovement()->DisableMovement();
     /* Add phisics, remove CapsuleComponent collision, makes Plyer ragdoll, add inpulse */
     GetCapsuleComponent()->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
     GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
     GetMesh()->SetSimulatePhysics(true);
-
-    const auto Mass = GetMesh()->GetBoneMass(BoneName);
-    //UE_LOG(LogTemp, Display, TEXT("Mass: %f"), Mass);
-    const FVector Force = FMath::IsNearlyZero(Mass) ? FVector::ZeroVector : ((GetActorLocation() - ShotFromDirection).GetSafeNormal() * 5000 / Mass);
-    //UE_LOG(LogTemp, Display, TEXT("Force: %s"), *Force.ToString());
-    GetMesh()->SetPhysicsLinearVelocity(Force, true, BoneName);
  
     /* find base class controller */
     const auto AIController = Cast<AAIController>(Controller);

@@ -62,8 +62,10 @@ void AEPBaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
     /* Aiming to allow make shot */
     PlayerInputComponent->BindAction("Aiming", IE_Pressed, this, &AEPBaseCharacter::StartAiming);
     PlayerInputComponent->BindAction("Aiming", IE_Released, this, &AEPBaseCharacter::StopAiming);
-    /* Change weapon */
+    /* Change weapon. Set animation in Unreal Editor */
     PlayerInputComponent->BindAction("ChangeWeapon", IE_Pressed, WeaponComponent, &UEPWeaponComponent::NextWeapon);
+    /* Reload weapon. Set animation in Unreal Editor */
+    PlayerInputComponent->BindAction("ReloadWeapon", IE_Pressed, WeaponComponent, &UEPWeaponComponent::Reload);
 }
 /* Use this function in animation blueprint to set direction in statemachine */
 float AEPBaseCharacter::GetMovementDirection() const
@@ -105,7 +107,7 @@ void AEPBaseCharacter::StopRunning()
     bWantsToRun = false;
 }
 /* Function binded to HealthComponent FOnDeath delegate*/
-void AEPBaseCharacter::OnDeath(FVector ShotFromDirection, FName BoneName)
+void AEPBaseCharacter::OnDeath()
 {
     GetCharacterMovement()->DisableMovement();
     /* Add phisics, makes Player ragdoll */

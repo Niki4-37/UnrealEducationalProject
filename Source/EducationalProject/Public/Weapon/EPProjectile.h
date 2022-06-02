@@ -9,16 +9,17 @@
 
 class USphereComponent;
 class UProjectileMovementComponent;
+class UDamageType;
 
 UCLASS()
 class EDUCATIONALPROJECT_API AEPProjectile : public AActor
 {
-	GENERATED_BODY()
-	
-public:	
-	AEPProjectile();
+    GENERATED_BODY()
 
-    void SetProjectileDirection(const FVector& Derection){ProjectileDirection = Derection; };
+public:
+    AEPProjectile();
+
+    void SetProjectileDirection(const FVector& Derection) { ProjectileDirection = Derection; };
 
 protected:
     UPROPERTY(VisibleDefaultsOnly, Category = "Weapon")
@@ -27,8 +28,27 @@ protected:
     UPROPERTY(VisibleDefaultsOnly, Category = "Weapon")
     UProjectileMovementComponent* MovementComponent;
 
-	virtual void BeginPlay() override;
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
+    TSubclassOf<UDamageType> DamageType;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Weapon")
+    float LifeTime = 5.f;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Weapon")
+    float DamageAmount = 10.f;
+
+    virtual void BeginPlay() override;
 
 private:
     FVector ProjectileDirection;
+
+    UFUNCTION()
+    void OnComponentHit(UPrimitiveComponent* HitComponent,   //
+                        AActor* OtherActor,                  //
+                        UPrimitiveComponent* OtherComp,      //
+                        FVector NormalImpulse,               //
+                        const FHitResult& Hit);              //
+
+    AController* GetController() const;
+
 };

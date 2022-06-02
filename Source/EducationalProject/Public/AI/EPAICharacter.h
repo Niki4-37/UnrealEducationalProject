@@ -28,6 +28,6 @@ protected:
 
 private:
     /* Function binded to HealthComponent FOnDeath delegate*/
-    void OnDeath(FVector ShotFromDirection, FName BoneName);
+    void OnDeath();
 
 };

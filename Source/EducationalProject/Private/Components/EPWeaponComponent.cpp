@@ -7,6 +7,8 @@
 #include "Weapon/EPBaseWeapon.h"
 #include "Animation/EPIntoTheHolsterAnimNotify.h"
 #include "Animation/EPFromTheHolsterAnimNotify.h"
+#include "Animation/EPEquipFinishedAnimNotify.h"
+#include "Animation/EPReloadFinishedAnimNotify.h"
 
 UEPWeaponComponent::UEPWeaponComponent()
 {
@@ -36,6 +38,7 @@ bool UEPWeaponComponent::GetAmmoData(FAmmoData& Data) const
 
 void UEPWeaponComponent::NextWeapon()
 {
+    if (!CanEquip()) return;
     /* find equip animation for current weapon */
     if (CurrentWeapon)
     {
@@ -44,9 +47,19 @@ void UEPWeaponComponent::NextWeapon()
         CurrentEquipAnimation = CurrentWeaponAnimData ? CurrentWeaponAnimData->EquipAnimation : nullptr;
 
         /* CurrentEquipAnimation pointer checks inside PlayAnimMontage(). 
-        There is IntoTheHolsterAnimNotify in EquipAnimation, */
+        * There is IntoTheHolsterAnimNotify in EquipAnimation, */
         PlayAnimation(CurrentEquipAnimation);
+        bEquipAnimInProgress = true;
     }
+}
+
+void UEPWeaponComponent::Reload() 
+{
+    UE_LOG(LogTemp, Display, TEXT("Reload button pressed"));
+    if (!CanReload()) return;
+    UE_LOG(LogTemp, Display, TEXT("Reload checked, allowed"));
+    bReloadAnimInProgress = true;
+    PlayAnimation(CurrentReloadAnimation);
 }
 
 void UEPWeaponComponent::BeginPlay()
@@ -88,6 +101,20 @@ void UEPWeaponComponent::InitAnimation()
         if (!FromTheHolsterAnimNotify) continue;
         FromTheHolsterAnimNotify->OnNotified.AddUObject(this, &UEPWeaponComponent::FromTheHolster);
     }
+
+    for (auto& OneWeaponAnim : WeaponAnimData)
+    {
+        auto EquipFinishedAnimNotify = FindNotifyByClass<UEPEquipFinishedAnimNotify>(OneWeaponAnim.EquipAnimation);
+        if (!EquipFinishedAnimNotify) continue;
+        EquipFinishedAnimNotify->OnNotified.AddUObject(this, &UEPWeaponComponent::OnEquipFinished);
+    }
+
+    for (auto& OneWeaponAnim : WeaponAnimData)
+    {
+        auto ReloadFinishedAnimNotify = FindNotifyByClass<UEPReloadFinishedAnimNotify>(OneWeaponAnim.ReloadAnimation);
+        if (!ReloadFinishedAnimNotify) continue;
+        ReloadFinishedAnimNotify->OnNotified.AddUObject(this, &UEPWeaponComponent::OnReloadFinished);
+    }
 }
 
 void UEPWeaponComponent::PlayAnimation(UAnimMontage* Animation)
@@ -123,6 +150,23 @@ void UEPWeaponComponent::FromTheHolster(USkeletalMeshComponent* MeshComponent)
 
     CurrentWeaponIndex = (CurrentWeaponIndex + 1) % OwningWeapons.Num();
     EquipWeapon(CurrentWeaponIndex);
+}
+
+/* binded to EquipFinishedAnimNotify, allows weapon change */
+void UEPWeaponComponent::OnEquipFinished(USkeletalMeshComponent* MeshComponent)
+{
+    ACharacter* Character = Cast<ACharacter>(GetOwner());
+    if (!Character || MeshComponent != Character->GetMesh()) return;
+
+    bEquipAnimInProgress = false;
+}
+
+void UEPWeaponComponent::OnReloadFinished(USkeletalMeshComponent* MeshComponent) 
+{
+    ACharacter* Character = Cast<ACharacter>(GetOwner());
+    if (!Character || MeshComponent != Character->GetMesh()) return;
+
+    bReloadAnimInProgress = false;
 }
 
 void UEPWeaponComponent::SpawnWeapon()
@@ -165,9 +209,24 @@ void UEPWeaponComponent::EquipWeapon(int32 WeaponIndex)
 
     CurrentWeapon = OwningWeapons[WeaponIndex];
 
-    /*const auto CurrentWeaponAnimData = WeaponAnimData.FindByPredicate([&](const FWaeponAnimData& Data)
+    UE_LOG(LogTemp, Display, TEXT("CurrentWeapon %s"), *CurrentWeapon->GetName());
+    
+    const auto CurrentWeaponAnimData = WeaponAnimData.FindByPredicate([&](const FWaeponAnimData& Data)
         { return Data.WeaponClass == CurrentWeapon->GetClass(); });
-    CurrentEquipAnimation = CurrentWeaponAnimData ? CurrentWeaponAnimData->EquipAnimation : nullptr;*/
+    CurrentReloadAnimation = CurrentWeaponAnimData ? CurrentWeaponAnimData->ReloadAnimation : nullptr;
+    
+    FString TestText = CurrentReloadAnimation ? "true" : "false";
+    UE_LOG(LogTemp, Display, TEXT("CurrentReloadAnimation %s"), *TestText);
 
     AttachWeaponToSocket(CurrentWeapon, Player->GetMesh(), WeaponArmedSocketName);
+}
+
+bool UEPWeaponComponent::CanEquip()
+{
+    return !bEquipAnimInProgress && !bReloadAnimInProgress;
+}
+
+bool UEPWeaponComponent::CanReload()
+{
+    return CurrentWeapon && !bEquipAnimInProgress && !bReloadAnimInProgress;
 }
