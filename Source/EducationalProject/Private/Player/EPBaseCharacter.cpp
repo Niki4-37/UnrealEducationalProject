@@ -107,7 +107,7 @@ void AEPBaseCharacter::StopRunning()
     bWantsToRun = false;
 }
 /* Function binded to HealthComponent FOnDeath delegate*/
-void AEPBaseCharacter::OnDeath()
+void AEPBaseCharacter::OnDeath(  )
 {
     GetCharacterMovement()->DisableMovement();
     /* Add phisics, makes Player ragdoll */

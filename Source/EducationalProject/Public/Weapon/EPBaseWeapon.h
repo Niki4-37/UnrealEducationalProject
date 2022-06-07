@@ -7,7 +7,12 @@
 #include "EPCoreData.h"
 #include "EPBaseWeapon.generated.h"
 
+DECLARE_MULTICAST_DELEGATE(FOnClipEmptySignature);
+
 class USkeletalMeshComponent;
+class UAnimMontage;
+class UNiagaraSystem;
+class UNiagaraComponent;
 
 UCLASS()
 class EDUCATIONALPROJECT_API AEPBaseWeapon : public AActor
@@ -17,19 +22,31 @@ class EDUCATIONALPROJECT_API AEPBaseWeapon : public AActor
 public:	
 	AEPBaseWeapon();
 
+    FOnClipEmptySignature OnClipEmpty;
+
     virtual void Fire();
     /* Gives info about ammo in widget use in WeaponComponent */
     FAmmoData GetCurrentAmmo() const { return CurrentAmmo; };
-    
+    /* Used in AnimationBlueprint */
     UFUNCTION(BlueprintCallable, Category = "Animation")
     EWeaponType GetWeaponType() const { return WeaponType; };
+
+    bool CanReload() const;
+    void ChangeClip();
+
+    USkeletalMeshComponent* GetSkeletalMesh() const { return WeaponMesh; };
+    
+    UNiagaraComponent* SpawnEjectFX();
 
 protected:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components")
     USkeletalMeshComponent* WeaponMesh;
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon")
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "VFX")
     FName MuzzleSocketName = "MuzzleSocket";
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "VFX")
+    FName AmmoEjectSocketName = "AmmoEject";
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Weapon")
     float BulletFlyMaxDistace = 1500.f;
@@ -50,6 +67,12 @@ protected:
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Weapon")
     EWeaponType WeaponType = EWeaponType::None;
 
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation")
+    UAnimMontage* ShootingAnimation;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "VFX")
+    UNiagaraSystem* EjectFX;
+
 	virtual void BeginPlay() override;
 
     APlayerController* GetPlayerController() const;
@@ -64,9 +87,12 @@ protected:
     bool IsAmmoEmpty() const;
     void DecreaseAmmo();
 
+    virtual void InitAnimation();
+
 private:
     FAmmoData CurrentAmmo;
 
     bool IsClipEmpty() const;
-    void ChangeClip();
+
+    void PlayAnimation(UAnimationAsset* Animation);
 };

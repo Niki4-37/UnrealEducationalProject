@@ -7,8 +7,11 @@
 #include "GameFramework/Character.h"
 #include "Kismet/GameplayStatics.h"
 #include "Components/SkeletalMeshComponent.h"
-
+#include "NiagaraFunctionLibrary.h"
+#include "NiagaraComponent.h"
 #include "Engine.h"
+
+DEFINE_LOG_CATEGORY_STATIC(BaseWeapon_LOG, All, All);
 
 AEPBaseWeapon::AEPBaseWeapon()
 {
@@ -23,6 +26,29 @@ void AEPBaseWeapon::Fire()
     MakeShot();
 }
 
+bool AEPBaseWeapon::CanReload() const
+{
+    return CurrentAmmo.Bullets < DefaultAmmo.Bullets && CurrentAmmo.Clips > 0;
+}
+
+/* Additional uses in WeaponComponent */
+void AEPBaseWeapon::ChangeClip()
+{
+    CurrentAmmo.Bullets = DefaultAmmo.Bullets;
+    --CurrentAmmo.Clips;
+}
+
+UNiagaraComponent* AEPBaseWeapon::SpawnEjectFX()
+{
+    return UNiagaraFunctionLibrary::SpawnSystemAttached(EjectFX,                        //
+                                                        WeaponMesh,                     //
+                                                        AmmoEjectSocketName,            //
+                                                        FVector::ZeroVector,            //
+                                                        FRotator::ZeroRotator,          //
+                                                        EAttachLocation::SnapToTarget,  //
+                                                        true);                          //
+}
+
 void AEPBaseWeapon::BeginPlay()
 {
     Super::BeginPlay();
@@ -31,6 +57,8 @@ void AEPBaseWeapon::BeginPlay()
     check(GetWorld());
 
     CurrentAmmo = DefaultAmmo;
+
+    InitAnimation();
 }
 
 APlayerController* AEPBaseWeapon::GetPlayerController() const
@@ -39,8 +67,7 @@ APlayerController* AEPBaseWeapon::GetPlayerController() const
         GetOwner() returns Actor to make Cast to Character to get it's controller,
         check pointer, return Controller */
     const auto Player = Cast<ACharacter>(GetOwner());
-    if (!Player) return nullptr;
-    return Player->GetController<APlayerController>();
+    return Player ? Player->GetController<APlayerController>() : nullptr;
 }
 
 bool AEPBaseWeapon::GetPlayerVeiwpoint(FVector& VeiwLocation, FRotator& VeiwRotation) const
@@ -58,7 +85,7 @@ bool AEPBaseWeapon::GetTraceData(FVector& TraceStart, FVector& TraceEnd) const
     if (!GetPlayerVeiwpoint(VeiwLocation, VeiwRotation)) return false;
 
     TraceStart = VeiwLocation;
-    const FVector ShotDirection = VeiwRotation.Vector(); 
+    const FVector ShotDirection = VeiwRotation.Vector();
     TraceEnd = VeiwLocation + ShotDirection * BulletFlyMaxDistace;
 
     return true;
@@ -69,16 +96,13 @@ FVector AEPBaseWeapon::GetMuzzleWorldLocation() const
     return WeaponMesh->GetSocketLocation(MuzzleSocketName);
 }
 
-void AEPBaseWeapon::MakeShot()
+void AEPBaseWeapon::MakeShot() 
 {
-    
+    PlayAnimation(ShootingAnimation);
 }
-
 
 void AEPBaseWeapon::MakeHit(FHitResult& HitResult, FVector& TraceStart, FVector& TraceEnd)
 {
-    //if (!GetWorld()) return;
-    
     FCollisionQueryParams CollisionParams;
     CollisionParams.AddIgnoredActor(GetOwner());
 
@@ -99,17 +123,20 @@ void AEPBaseWeapon::DecreaseAmmo()
     --CurrentAmmo.Bullets;
     if (IsClipEmpty() && !IsAmmoEmpty())
     {
-        ChangeClip();
+        // ChangeClip();
+        OnClipEmpty.Broadcast();
     }
 }
+
+void AEPBaseWeapon::InitAnimation() {}
 
 bool AEPBaseWeapon::IsClipEmpty() const
 {
     return CurrentAmmo.Bullets == 0;
 }
 
-void AEPBaseWeapon::ChangeClip()
+void AEPBaseWeapon::PlayAnimation(UAnimationAsset* Animation)
 {
-    CurrentAmmo.Bullets = DefaultAmmo.Bullets;
-    --CurrentAmmo.Clips;
+    WeaponMesh->PlayAnimation(Animation, false);
 }
+

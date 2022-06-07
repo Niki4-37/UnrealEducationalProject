@@ -12,23 +12,6 @@ class AEPBaseWeapon;
 class UAnimMontage;
 class USkeletalMeshComponent;
 
-USTRUCT(BlueprintType)
-struct FWaeponAnimData
-{
-    GENERATED_USTRUCT_BODY()
-
-    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Animation")
-    TSubclassOf<AEPBaseWeapon> WeaponClass;
-
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation")
-    UAnimMontage* EquipAnimation;
-
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation")
-    UAnimMontage* ReloadAnimation;
-
-    //TArray<UAnimSequence*> AnimSequences;
-};
-
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class EDUCATIONALPROJECT_API UEPWeaponComponent : public UActorComponent
 {
@@ -40,7 +23,7 @@ public:
     void Fire();
     /* use this info in widget*/
     bool GetAmmoData(FAmmoData& Data) const;
-
+    /* Used in AnimationBlueprint */
     UFUNCTION(BlueprintCallable)
     AEPBaseWeapon* GetCurrentWeapon() const { return CurrentWeapon; };
 
@@ -73,21 +56,15 @@ private:
     UAnimMontage* CurrentEquipAnimation = nullptr;
 
     UPROPERTY()
-    UAnimMontage* CurrentReloadAnimation = nullptr;    
+    UAnimMontage* CurrentReloadAnimation = nullptr;
+
+    UPROPERTY()
+    UAnimMontage* CurrentSingleFireAnimation = nullptr;
 
     int32 CurrentWeaponIndex;
 
     bool bEquipAnimInProgress = false;
     bool bReloadAnimInProgress = false;
-    
-    /*template <typename RequiredClass, typename UserClass>
-    void BindFuncToNotifyEvent(UAnimMontage* Animation, UserClass* InUserObject, ????)
-    {
-        if (!Animation || !InUserObject) return;
-        auto AnimNotify = FindNotifyByClass<RequiredClass>(Animation);
-        if (!AnimNotify) return;
-        AnimNotify->OnNotified.AddUObject(InUserObject, ????);
-    }*/
 
     void InitAnimation();
     void PlayAnimation(UAnimMontage* Animation);
@@ -95,6 +72,8 @@ private:
     void FromTheHolster(USkeletalMeshComponent* MeshComponent);
     void OnEquipFinished(USkeletalMeshComponent* MeshComponent);
     void OnReloadFinished(USkeletalMeshComponent* MeshComponent);
+    
+    void OnShellCasingEject(USkeletalMeshComponent* MeshComponent);
 
     void SpawnWeapon();
     void AttachWeaponToSocket(AEPBaseWeapon* Weapon, USceneComponent* SceneComponent, const FName& SocketName);
@@ -102,18 +81,8 @@ private:
 
     bool CanEquip();
     bool CanReload();
+    bool CanDoAction();
 
-    template <typename Y>
-    Y* FindNotifyByClass(UAnimSequenceBase* Animation)
-    {
-        if (!Animation) return nullptr;
-        
-        const TArray<FAnimNotifyEvent> Notifies = Animation->Notifies;
-        for (auto& NotifyEvent : Notifies)
-        {
-            auto RequiredNotify = Cast<Y>(NotifyEvent.Notify);
-            if (RequiredNotify) return RequiredNotify;
-        }
-        return nullptr;
-    }
+    void OnClipEmpty();
+    void ChangeClip();
 };

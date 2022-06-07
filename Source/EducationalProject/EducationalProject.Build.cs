@@ -15,8 +15,9 @@ public class EducationalProject : ModuleRules
             "Engine", 
             "InputCore",
             "GameplayTasks",    //Add AI in game to avoid linker error LNK2001
-            "NavigationSystem"  //Add AI in game
-        });
+            "NavigationSystem",  //Add AI in game
+            "Niagara"
+            });
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
 		
@@ -29,8 +30,9 @@ public class EducationalProject : ModuleRules
             "EducationalProject/Public/UI",
             "EducationalProject/Public/AI",
             "EducationalProject/Public/AI/Services",
-            "EducationalProject/Public/Animation"
-		});
+            "EducationalProject/Public/Animation",
+            "EducationalProject/Public/Weapon/Components"
+        });
 
 		// Uncomment if you are using Slate UI
 		// PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });

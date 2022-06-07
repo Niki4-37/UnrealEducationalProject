@@ -29,7 +29,7 @@ void AEPProjectile::BeginPlay()
     check(CollisionComponent);
     check(MovementComponent);
     MovementComponent->Velocity = ProjectileDirection * MovementComponent->InitialSpeed;
-
+    CollisionComponent->IgnoreActorWhenMoving(GetOwner(), true);
     CollisionComponent->OnComponentHit.AddDynamic(this, &AEPProjectile::OnComponentHit);
 
     SetLifeSpan(LifeTime);
@@ -41,15 +41,16 @@ void AEPProjectile::OnComponentHit(UPrimitiveComponent* HitComponent,  //
                                    FVector NormalImpulse,              //
                                    const FHitResult& Hit)              //
 {
-    if (!GetWorld()) return;
-
-    UGameplayStatics::ApplyDamage(Hit.GetActor(),   //
+    // if (!GetWorld()) return;
+    UGameplayStatics::ApplyDamage(OtherActor,       // Hit.GetActor()
                                   DamageAmount,     //
                                   GetController(),  //
                                   GetOwner(),       //
                                   DamageType);      //
 
-    Destroy();
+    HitComponent->SetSimulatePhysics(true);
+    // Destroy();
+    SetLifeSpan(5.f);
 }
 
 AController* AEPProjectile::GetController() const

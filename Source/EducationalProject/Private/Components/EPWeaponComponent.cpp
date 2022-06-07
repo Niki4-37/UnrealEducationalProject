@@ -3,12 +3,17 @@
 #include "Components/EPWeaponComponent.h"
 #include "GameFramework/Character.h"
 #include "Player/EPBaseCharacter.h"
+#include "AnimationHelper.h"
 
 #include "Weapon/EPBaseWeapon.h"
+#include "Weapon/EPMultiDamageWeapon.h"
 #include "Animation/EPIntoTheHolsterAnimNotify.h"
 #include "Animation/EPFromTheHolsterAnimNotify.h"
 #include "Animation/EPEquipFinishedAnimNotify.h"
 #include "Animation/EPReloadFinishedAnimNotify.h"
+#include "Animation/EPShellCasingEjectAnimNotify.h"
+
+DEFINE_LOG_CATEGORY_STATIC(WeaponComponent_LOG, All, All);
 
 UEPWeaponComponent::UEPWeaponComponent()
 {
@@ -19,9 +24,10 @@ void UEPWeaponComponent::Fire()
 {
     const auto Player = Cast<AEPBaseCharacter>(GetOwner());
     if (!CurrentWeapon || !Player) return;
-    if (Player->IsAiming())
+    if (Player->IsAiming() && CanDoAction() && CurrentSingleFireAnimation)
     {
         CurrentWeapon->Fire();
+        PlayAnimation(CurrentSingleFireAnimation);
     }
 }
 
@@ -55,11 +61,7 @@ void UEPWeaponComponent::NextWeapon()
 
 void UEPWeaponComponent::Reload() 
 {
-    UE_LOG(LogTemp, Display, TEXT("Reload button pressed"));
-    if (!CanReload()) return;
-    UE_LOG(LogTemp, Display, TEXT("Reload checked, allowed"));
-    bReloadAnimInProgress = true;
-    PlayAnimation(CurrentReloadAnimation);
+    ChangeClip();
 }
 
 void UEPWeaponComponent::BeginPlay()
@@ -90,30 +92,48 @@ void UEPWeaponComponent::InitAnimation()
 {
     for (auto& OneWeaponAnim : WeaponAnimData)
     {
-        auto IntoTheHolsterAnimNotify = FindNotifyByClass<UEPIntoTheHolsterAnimNotify>(OneWeaponAnim.EquipAnimation);
-        if (!IntoTheHolsterAnimNotify) continue;
+        auto IntoTheHolsterAnimNotify = AnimationHelper::FindNotifyByClass<UEPIntoTheHolsterAnimNotify>(OneWeaponAnim.EquipAnimation);
+        if (!IntoTheHolsterAnimNotify) 
+        {
+            UE_LOG(WeaponComponent_LOG, Error, TEXT("IntoTheHolsterAnimNotify not setted to current animation"));
+            checkNoEntry();
+        }
         IntoTheHolsterAnimNotify->OnNotified.AddUObject(this, &UEPWeaponComponent::IntoTheHolster);
-    }
-    
-    for (auto& OneWeaponAnim : WeaponAnimData)
-    {
-        auto FromTheHolsterAnimNotify = FindNotifyByClass<UEPFromTheHolsterAnimNotify>(OneWeaponAnim.EquipAnimation);
-        if (!FromTheHolsterAnimNotify) continue;
+
+        auto FromTheHolsterAnimNotify = AnimationHelper::FindNotifyByClass<UEPFromTheHolsterAnimNotify>(OneWeaponAnim.EquipAnimation);
+        if (!FromTheHolsterAnimNotify)
+        {
+            UE_LOG(WeaponComponent_LOG, Error, TEXT("FromTheHolsterAnimNotify not setted to current animation"));
+            checkNoEntry();
+        }
         FromTheHolsterAnimNotify->OnNotified.AddUObject(this, &UEPWeaponComponent::FromTheHolster);
-    }
-
-    for (auto& OneWeaponAnim : WeaponAnimData)
-    {
-        auto EquipFinishedAnimNotify = FindNotifyByClass<UEPEquipFinishedAnimNotify>(OneWeaponAnim.EquipAnimation);
-        if (!EquipFinishedAnimNotify) continue;
+    
+        auto EquipFinishedAnimNotify = AnimationHelper::FindNotifyByClass<UEPEquipFinishedAnimNotify>(OneWeaponAnim.EquipAnimation);
+        if (!EquipFinishedAnimNotify)
+        {
+            UE_LOG(WeaponComponent_LOG, Error, TEXT("EquipFinishedAnimNotify not setted to current animation"));
+            checkNoEntry();
+        }
         EquipFinishedAnimNotify->OnNotified.AddUObject(this, &UEPWeaponComponent::OnEquipFinished);
-    }
-
-    for (auto& OneWeaponAnim : WeaponAnimData)
-    {
-        auto ReloadFinishedAnimNotify = FindNotifyByClass<UEPReloadFinishedAnimNotify>(OneWeaponAnim.ReloadAnimation);
-        if (!ReloadFinishedAnimNotify) continue;
+    
+        auto ReloadFinishedAnimNotify = AnimationHelper::FindNotifyByClass<UEPReloadFinishedAnimNotify>(OneWeaponAnim.ReloadAnimation);
+        if (!ReloadFinishedAnimNotify)
+        {
+            UE_LOG(WeaponComponent_LOG, Error, TEXT("ReloadFinishedAnimNotify not setted to current animation"));
+            checkNoEntry();
+        }
         ReloadFinishedAnimNotify->OnNotified.AddUObject(this, &UEPWeaponComponent::OnReloadFinished);
+
+        if (OneWeaponAnim.WeaponClass->IsChildOf<AEPMultiDamageWeapon>())
+        {
+            auto ShellCasingEjectAnimNotify = AnimationHelper::FindNotifyByClass<UEPShellCasingEjectAnimNotify>(OneWeaponAnim.ReloadAnimation);
+            if (!ShellCasingEjectAnimNotify)
+            {
+                UE_LOG(WeaponComponent_LOG, Error, TEXT("ShellCasingEjectAnimNotify not setted to current animation"));
+                checkNoEntry();
+            }
+            ShellCasingEjectAnimNotify->OnNotified.AddUObject(this, &UEPWeaponComponent::OnShellCasingEject);
+        }
     }
 }
 
@@ -169,6 +189,14 @@ void UEPWeaponComponent::OnReloadFinished(USkeletalMeshComponent* MeshComponent)
     bReloadAnimInProgress = false;
 }
 
+void UEPWeaponComponent::OnShellCasingEject(USkeletalMeshComponent* MeshComponent) 
+{
+    ACharacter* Character = Cast<ACharacter>(GetOwner());
+    if (MeshComponent != Character->GetMesh()) return;
+    UE_LOG(WeaponComponent_LOG, Display, TEXT("OnShellCasingEject Event"));
+    CurrentWeapon->SpawnEjectFX();
+}
+
 void UEPWeaponComponent::SpawnWeapon()
 {
     ACharacter* Player = Cast<ACharacter>(GetOwner());
@@ -179,6 +207,7 @@ void UEPWeaponComponent::SpawnWeapon()
         auto Weapon = GetWorld()->SpawnActor<AEPBaseWeapon>(OneWeaponAnim.WeaponClass);
         if (!Weapon) continue;
 
+        Weapon->OnClipEmpty.AddUObject(this, &UEPWeaponComponent::OnClipEmpty);
         Weapon->SetOwner(Player);
         OwningWeapons.Add(Weapon);
         ////////////////////////////////////////////////////////////////////////////
@@ -214,19 +243,37 @@ void UEPWeaponComponent::EquipWeapon(int32 WeaponIndex)
     const auto CurrentWeaponAnimData = WeaponAnimData.FindByPredicate([&](const FWaeponAnimData& Data)
         { return Data.WeaponClass == CurrentWeapon->GetClass(); });
     CurrentReloadAnimation = CurrentWeaponAnimData ? CurrentWeaponAnimData->ReloadAnimation : nullptr;
-    
-    FString TestText = CurrentReloadAnimation ? "true" : "false";
-    UE_LOG(LogTemp, Display, TEXT("CurrentReloadAnimation %s"), *TestText);
+    CurrentSingleFireAnimation = CurrentWeaponAnimData ? CurrentWeaponAnimData->SingleFireAnimation : nullptr;
 
     AttachWeaponToSocket(CurrentWeapon, Player->GetMesh(), WeaponArmedSocketName);
 }
 
 bool UEPWeaponComponent::CanEquip()
 {
-    return !bEquipAnimInProgress && !bReloadAnimInProgress;
+    return CanDoAction();
 }
 
 bool UEPWeaponComponent::CanReload()
 {
-    return CurrentWeapon && !bEquipAnimInProgress && !bReloadAnimInProgress;
+    return CurrentWeapon 
+        && CanDoAction()
+        && CurrentWeapon->CanReload();
+}
+
+bool UEPWeaponComponent::CanDoAction()
+{
+    return !bEquipAnimInProgress && !bReloadAnimInProgress;
+}
+
+void UEPWeaponComponent::OnClipEmpty() 
+{
+    ChangeClip();
+}
+
+void UEPWeaponComponent::ChangeClip() 
+{
+    if (!CanReload()) return;
+    CurrentWeapon->ChangeClip();
+    bReloadAnimInProgress = true;
+    PlayAnimation(CurrentReloadAnimation);
 }
