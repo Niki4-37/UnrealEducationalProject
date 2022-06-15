@@ -17,11 +17,14 @@ class EDUCATIONALPROJECT_API UEPPlayerWidget : public UUserWidget
 	GENERATED_BODY()
 	
 public:
-    UFUNCTION(BlueprintCallable)
+    UFUNCTION(BlueprintCallable, Category = "UI")
     float GetHealthPercent() const;
 
-    UFUNCTION(BlueprintCallable)
+    UFUNCTION(BlueprintCallable, Category = "UI")
     bool GetAmmoData(FAmmoData& Data) const;
+
+    UFUNCTION(BlueprintCallable, Category = "UI")
+    bool IsPlayerOverlaped() const;
 
 private:
     template<typename T>

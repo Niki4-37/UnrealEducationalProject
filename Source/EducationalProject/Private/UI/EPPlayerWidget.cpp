@@ -31,6 +31,11 @@ bool UEPPlayerWidget::GetAmmoData(FAmmoData& Data) const
     return WeaponComponent->GetAmmoData(Data);
 }
 
+bool UEPPlayerWidget::IsPlayerOverlaped() const
+{
+    return false;
+}
+
 FString UEPPlayerWidget::DecorateNumbers(int32 Numbers) const
 {
     const int32 MaxLenght = 3;

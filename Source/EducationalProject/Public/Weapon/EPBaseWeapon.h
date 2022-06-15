@@ -30,10 +30,12 @@ public:
     /* Used in AnimationBlueprint */
     UFUNCTION(BlueprintCallable, Category = "Animation")
     EWeaponType GetWeaponType() const { return WeaponType; };
+    /* Used by Spawning Actor in Weapon component */
+    void SetWeaponType(EWeaponType Type) { WeaponType = Type; };
 
     bool CanReload() const;
     void ChangeClip();
-
+    /* Used in Weapon component */
     USkeletalMeshComponent* GetSkeletalMesh() const { return WeaponMesh; };
     
     UNiagaraComponent* SpawnEjectFX();
@@ -60,9 +62,6 @@ protected:
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Weapon")
     float WeaponDamage = 10.f;
-
-    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Weapon")
-    float BulletSpread = 1.f;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Weapon")
     EWeaponType WeaponType = EWeaponType::None;

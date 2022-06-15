@@ -14,7 +14,7 @@ class EDUCATIONALPROJECT_API AEPMultiDamageWeapon : public AEPBaseWeapon
 	GENERATED_BODY()
 	
 protected:
-    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Weapon")
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Projectile")
     TSubclassOf<AEPProjectile> ProjectileClass;
 
     virtual void MakeShot() override;

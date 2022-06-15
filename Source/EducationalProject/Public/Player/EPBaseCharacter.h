@@ -64,12 +64,12 @@ private:
     void MoveForward(float Amount);
     void MoveRight(float Amount);
     
-    /* Make Player moving faster*/
+    /* Make Player moving faster */
     bool bIsMoveForward = false;
     bool bWantsToRun = false;
     void StartRunning();
     void StopRunning();
-    /* Function binded to HealthComponent FOnDeath delegate*/
+    /* Function binded to HealthComponent FOnDeath delegate */
     void OnDeath();
 
     /* Aiming process */

@@ -25,13 +25,14 @@ public class EducationalProject : ModuleRules
 		{
 			"EducationalProject/Public/Player",
 			"EducationalProject/Public/Weapon",
-			"EducationalProject/Public/Components",
+            "EducationalProject/Public/Weapon/Components",
+            "EducationalProject/Public/Components",
+            "EducationalProject/Public/Pickups",
             "EducationalProject/Public/DamageFactors",
             "EducationalProject/Public/UI",
             "EducationalProject/Public/AI",
             "EducationalProject/Public/AI/Services",
-            "EducationalProject/Public/Animation",
-            "EducationalProject/Public/Weapon/Components"
+            "EducationalProject/Public/Animation"
         });
 
 		// Uncomment if you are using Slate UI

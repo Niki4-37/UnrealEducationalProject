@@ -66,6 +66,8 @@ void AEPBaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
     PlayerInputComponent->BindAction("ChangeWeapon", IE_Pressed, WeaponComponent, &UEPWeaponComponent::NextWeapon);
     /* Reload weapon. Set animation in Unreal Editor */
     PlayerInputComponent->BindAction("ReloadWeapon", IE_Pressed, WeaponComponent, &UEPWeaponComponent::Reload);
+    
+    PlayerInputComponent->BindAction("Take", IE_Pressed, WeaponComponent, &UEPWeaponComponent::TakeObject);
 }
 /* Use this function in animation blueprint to set direction in statemachine */
 float AEPBaseCharacter::GetMovementDirection() const

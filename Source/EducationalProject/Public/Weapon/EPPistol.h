@@ -21,6 +21,9 @@ protected:
     /* bind settings with Niagara System in Unreal Editor using user's variable */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "VFX")
     FString TraceTargetName = "TraceTarget";
+    
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Weapon")
+    float BulletSpread = 1.f;
 
     virtual bool GetTraceData(FVector& TraceStart, FVector& TraceEnd) const override;
     virtual void MakeShot() override;

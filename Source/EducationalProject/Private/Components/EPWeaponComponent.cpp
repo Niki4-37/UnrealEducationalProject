@@ -7,6 +7,7 @@
 
 #include "Weapon/EPBaseWeapon.h"
 #include "Weapon/EPMultiDamageWeapon.h"
+#include "Weapon/EPPistol.h"
 #include "Animation/EPIntoTheHolsterAnimNotify.h"
 #include "Animation/EPFromTheHolsterAnimNotify.h"
 #include "Animation/EPEquipFinishedAnimNotify.h"
@@ -44,33 +45,63 @@ bool UEPWeaponComponent::GetAmmoData(FAmmoData& Data) const
 
 void UEPWeaponComponent::NextWeapon()
 {
-    if (!CanEquip()) return;
+    if (!CanEquip() || OwningWeapons.Num() < 2) return;
     /* find equip animation for current weapon */
     if (CurrentWeapon)
     {
-        const auto CurrentWeaponAnimData = WeaponAnimData.FindByPredicate([&](const FWaeponAnimData& Data)
-            { return Data.WeaponClass == CurrentWeapon->GetClass(); });
+        const auto CurrentWeaponAnimData = WeaponAnimData.FindByPredicate(                                //
+            [&](const FWaeponAnimData& Data) { return Data.WeaponClass == CurrentWeapon->GetClass(); });  //
         CurrentEquipAnimation = CurrentWeaponAnimData ? CurrentWeaponAnimData->EquipAnimation : nullptr;
-
-        /* CurrentEquipAnimation pointer checks inside PlayAnimMontage(). 
-        * There is IntoTheHolsterAnimNotify in EquipAnimation, */
+        /* CurrentEquipAnimation pointer checks inside PlayAnimMontage().
+         * There is IntoTheHolsterAnimNotify in EquipAnimation */
         PlayAnimation(CurrentEquipAnimation);
         bEquipAnimInProgress = true;
     }
 }
 
-void UEPWeaponComponent::Reload() 
+void UEPWeaponComponent::Reload()
 {
     ChangeClip();
+}
+
+void UEPWeaponComponent::CanTakeObject(bool Enabled) 
+{
+    bCanTakeObject = Enabled;
+}
+
+void UEPWeaponComponent::TakeObject()
+{
+    if (!bCanTakeObject) return;
+    /* Find and detach weapon with same WeaponType */
+    int8 WeaponIndex = 0;
+    for (auto Weapon : OwningWeapons)
+    {
+        if (DetachWeaponFromActor(Weapon, WeaponTypeAtPickup, WeaponIndex))
+        {
+            break;
+        }
+        ++WeaponIndex;
+    }
+    SpawnWeapon(WeaponClassAtPickup);
+    PickupWasTaken.Broadcast();
+    bCanTakeObject = false;
+}
+
+bool UEPWeaponComponent::TryToAddWeapon(TSubclassOf<AEPBaseWeapon> WaponClass, EWeaponType WeaponType)
+{
+    WeaponClassAtPickup = WaponClass;
+    WeaponTypeAtPickup = WeaponType;
+
+    return false;
 }
 
 void UEPWeaponComponent::BeginPlay()
 {
     Super::BeginPlay();
 
-    InitAnimation();
+    InitAnimationNotify();
     CurrentWeaponIndex = 0;
-    SpawnWeapon();
+    SpawnWeaponAtBeginPlay();
     EquipWeapon(CurrentWeaponIndex);
 }
 
@@ -88,17 +119,20 @@ void UEPWeaponComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
     Super::EndPlay(EndPlayReason);
 }
 
-void UEPWeaponComponent::InitAnimation()
+void UEPWeaponComponent::InitAnimationNotify()
 {
     for (auto& OneWeaponAnim : WeaponAnimData)
     {
         auto IntoTheHolsterAnimNotify = AnimationHelper::FindNotifyByClass<UEPIntoTheHolsterAnimNotify>(OneWeaponAnim.EquipAnimation);
-        if (!IntoTheHolsterAnimNotify) 
+        if (!IntoTheHolsterAnimNotify)
         {
             UE_LOG(WeaponComponent_LOG, Error, TEXT("IntoTheHolsterAnimNotify not setted to current animation"));
             checkNoEntry();
         }
-        IntoTheHolsterAnimNotify->OnNotified.AddUObject(this, &UEPWeaponComponent::IntoTheHolster);
+        if (!IntoTheHolsterAnimNotify->OnNotified.IsBoundToObject(this))
+        {
+            IntoTheHolsterAnimNotify->OnNotified.AddUObject(this, &UEPWeaponComponent::IntoTheHolster);
+        }
 
         auto FromTheHolsterAnimNotify = AnimationHelper::FindNotifyByClass<UEPFromTheHolsterAnimNotify>(OneWeaponAnim.EquipAnimation);
         if (!FromTheHolsterAnimNotify)
@@ -106,23 +140,32 @@ void UEPWeaponComponent::InitAnimation()
             UE_LOG(WeaponComponent_LOG, Error, TEXT("FromTheHolsterAnimNotify not setted to current animation"));
             checkNoEntry();
         }
-        FromTheHolsterAnimNotify->OnNotified.AddUObject(this, &UEPWeaponComponent::FromTheHolster);
-    
+        if (!FromTheHolsterAnimNotify->OnNotified.IsBoundToObject(this))
+        {
+            FromTheHolsterAnimNotify->OnNotified.AddUObject(this, &UEPWeaponComponent::FromTheHolster);
+        }
+
         auto EquipFinishedAnimNotify = AnimationHelper::FindNotifyByClass<UEPEquipFinishedAnimNotify>(OneWeaponAnim.EquipAnimation);
         if (!EquipFinishedAnimNotify)
         {
             UE_LOG(WeaponComponent_LOG, Error, TEXT("EquipFinishedAnimNotify not setted to current animation"));
             checkNoEntry();
         }
-        EquipFinishedAnimNotify->OnNotified.AddUObject(this, &UEPWeaponComponent::OnEquipFinished);
-    
+        if (!EquipFinishedAnimNotify->OnNotified.IsBoundToObject(this))
+        {
+            EquipFinishedAnimNotify->OnNotified.AddUObject(this, &UEPWeaponComponent::OnEquipFinished);
+        }
+        
         auto ReloadFinishedAnimNotify = AnimationHelper::FindNotifyByClass<UEPReloadFinishedAnimNotify>(OneWeaponAnim.ReloadAnimation);
         if (!ReloadFinishedAnimNotify)
         {
             UE_LOG(WeaponComponent_LOG, Error, TEXT("ReloadFinishedAnimNotify not setted to current animation"));
             checkNoEntry();
         }
-        ReloadFinishedAnimNotify->OnNotified.AddUObject(this, &UEPWeaponComponent::OnReloadFinished);
+        if (!ReloadFinishedAnimNotify->OnNotified.IsBoundToObject(this))
+        {
+            ReloadFinishedAnimNotify->OnNotified.AddUObject(this, &UEPWeaponComponent::OnReloadFinished);
+        }
 
         if (OneWeaponAnim.WeaponClass->IsChildOf<AEPMultiDamageWeapon>())
         {
@@ -169,6 +212,7 @@ void UEPWeaponComponent::FromTheHolster(USkeletalMeshComponent* MeshComponent)
     if (!Character || MeshComponent != Character->GetMesh()) return;
 
     CurrentWeaponIndex = (CurrentWeaponIndex + 1) % OwningWeapons.Num();
+    UE_LOG(WeaponComponent_LOG, Display, TEXT("CurrentWeaponIndex: %i"), CurrentWeaponIndex);
     EquipWeapon(CurrentWeaponIndex);
 }
 
@@ -181,7 +225,7 @@ void UEPWeaponComponent::OnEquipFinished(USkeletalMeshComponent* MeshComponent)
     bEquipAnimInProgress = false;
 }
 
-void UEPWeaponComponent::OnReloadFinished(USkeletalMeshComponent* MeshComponent) 
+void UEPWeaponComponent::OnReloadFinished(USkeletalMeshComponent* MeshComponent)
 {
     ACharacter* Character = Cast<ACharacter>(GetOwner());
     if (!Character || MeshComponent != Character->GetMesh()) return;
@@ -189,7 +233,7 @@ void UEPWeaponComponent::OnReloadFinished(USkeletalMeshComponent* MeshComponent)
     bReloadAnimInProgress = false;
 }
 
-void UEPWeaponComponent::OnShellCasingEject(USkeletalMeshComponent* MeshComponent) 
+void UEPWeaponComponent::OnShellCasingEject(USkeletalMeshComponent* MeshComponent)
 {
     ACharacter* Character = Cast<ACharacter>(GetOwner());
     if (MeshComponent != Character->GetMesh()) return;
@@ -197,26 +241,34 @@ void UEPWeaponComponent::OnShellCasingEject(USkeletalMeshComponent* MeshComponen
     CurrentWeapon->SpawnEjectFX();
 }
 
-void UEPWeaponComponent::SpawnWeapon()
+void UEPWeaponComponent::SpawnWeaponAtBeginPlay()
+{
+    for (const auto& OneWeaponAnim : WeaponAnimData)
+    {
+        if (OneWeaponAnim.WeaponClass->IsChildOf<AEPPistol>())
+        {
+            SpawnWeapon(OneWeaponAnim.WeaponClass);
+        }
+    }
+}
+
+void UEPWeaponComponent::SpawnWeapon(TSubclassOf<AEPBaseWeapon> WaponClass)
 {
     ACharacter* Player = Cast<ACharacter>(GetOwner());
     if (!GetWorld() || !Player || !Player->GetMesh()) return;
 
-    for (const auto& OneWeaponAnim : WeaponAnimData)
-    {
-        auto Weapon = GetWorld()->SpawnActor<AEPBaseWeapon>(OneWeaponAnim.WeaponClass);
-        if (!Weapon) continue;
+    auto Weapon = GetWorld()->SpawnActor<AEPBaseWeapon>(WaponClass);
+    if (!Weapon) return;
 
-        Weapon->OnClipEmpty.AddUObject(this, &UEPWeaponComponent::OnClipEmpty);
-        Weapon->SetOwner(Player);
-        OwningWeapons.Add(Weapon);
-        ////////////////////////////////////////////////////////////////////////////
-        WeaponArmorySocketName = Weapon->GetWeaponType() == EWeaponType::OneHand  //
-                                     ? "PistolSocket"                             //
-                                     : "ArmorySocket";                            //
+    Weapon->OnClipEmpty.AddUObject(this, &UEPWeaponComponent::OnClipEmpty);
+    Weapon->SetOwner(Player);
+    OwningWeapons.Add(Weapon);
+    ////////////////////////////////////////////////////////////////////////////
+    WeaponArmorySocketName = Weapon->GetWeaponType() == EWeaponType::OneHand  //
+                                 ? "PistolSocket"                             //
+                                 : "ArmorySocket";                            //
 
-        AttachWeaponToSocket(Weapon, Player->GetMesh(), WeaponArmorySocketName);
-    }
+    AttachWeaponToSocket(Weapon, Player->GetMesh(), WeaponArmorySocketName);
 }
 
 void UEPWeaponComponent::AttachWeaponToSocket(AEPBaseWeapon* Weapon,            //
@@ -239,13 +291,33 @@ void UEPWeaponComponent::EquipWeapon(int32 WeaponIndex)
     CurrentWeapon = OwningWeapons[WeaponIndex];
 
     UE_LOG(LogTemp, Display, TEXT("CurrentWeapon %s"), *CurrentWeapon->GetName());
-    
-    const auto CurrentWeaponAnimData = WeaponAnimData.FindByPredicate([&](const FWaeponAnimData& Data)
-        { return Data.WeaponClass == CurrentWeapon->GetClass(); });
+
+    const auto CurrentWeaponAnimData = WeaponAnimData.FindByPredicate([&](const FWaeponAnimData& Data) { return Data.WeaponClass == CurrentWeapon->GetClass(); });
     CurrentReloadAnimation = CurrentWeaponAnimData ? CurrentWeaponAnimData->ReloadAnimation : nullptr;
     CurrentSingleFireAnimation = CurrentWeaponAnimData ? CurrentWeaponAnimData->SingleFireAnimation : nullptr;
 
     AttachWeaponToSocket(CurrentWeapon, Player->GetMesh(), WeaponArmedSocketName);
+}
+
+bool UEPWeaponComponent::DetachWeaponFromActor(AEPBaseWeapon* Weapon, EWeaponType Type, int8 WeaponIndex)
+{
+    if (!Weapon ||                          //
+        Weapon->GetWeaponType() != Type ||  //
+        !Weapon->GetSkeletalMesh() ||       //
+        WeaponIndex > OwningWeapons.Num())  //
+        return false;
+
+    Weapon->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+    Weapon->GetSkeletalMesh()->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
+    Weapon->GetSkeletalMesh()->SetSimulatePhysics(true);
+
+    if (Weapon == CurrentWeapon)
+    {
+        NextWeapon();
+    }
+
+    OwningWeapons.RemoveAt(WeaponIndex);
+    return true;
 }
 
 bool UEPWeaponComponent::CanEquip()
@@ -255,9 +327,7 @@ bool UEPWeaponComponent::CanEquip()
 
 bool UEPWeaponComponent::CanReload()
 {
-    return CurrentWeapon 
-        && CanDoAction()
-        && CurrentWeapon->CanReload();
+    return CurrentWeapon && CanDoAction() && CurrentWeapon->CanReload();
 }
 
 bool UEPWeaponComponent::CanDoAction()
@@ -265,12 +335,12 @@ bool UEPWeaponComponent::CanDoAction()
     return !bEquipAnimInProgress && !bReloadAnimInProgress;
 }
 
-void UEPWeaponComponent::OnClipEmpty() 
+void UEPWeaponComponent::OnClipEmpty()
 {
     ChangeClip();
 }
 
-void UEPWeaponComponent::ChangeClip() 
+void UEPWeaponComponent::ChangeClip()
 {
     if (!CanReload()) return;
     CurrentWeapon->ChangeClip();
